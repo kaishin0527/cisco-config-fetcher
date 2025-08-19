@@ -1,0 +1,66 @@
+
+
+{% extends "base.html" %}
+
+{% block title %}Import Command Groups{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>コマンドグループをインポート</h1>
+    <p>YAML形式のコマンドグループ設定ファイルをインポートします。</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>インポート設定</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="file">YAMLファイルを選択:</label>
+                            <input type="file" class="form-control-file" id="file" name="file" accept=".yaml,.yml" required>
+                            <small class="form-text text-muted">ダウンロードしたコマンドグループ設定ファイルを編集してアップロードしてください。</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">インポート</button>
+                        <a href="{{ url_for('command_groups') }}" class="btn btn-secondary">キャンセル</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>YAML形式の例</h3>
+                </div>
+                <div class="card-body">
+                    <pre><code>basic-config:
+  commands:
+    - show version
+    - show running-config
+    - show interfaces
+  description: 基本設定確認コマンド
+  group: basic
+
+interface-config:
+  commands:
+    - show ip interface brief
+    - show interfaces status
+    - show interfaces description
+  description: インターフェース設定コマンド
+  group: interface
+
+security-config:
+  commands:
+    - show access-lists
+    - show ip ssh
+    - show crypto isakmp sa
+  description: セキュリティ設定コマンド
+  group: security</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

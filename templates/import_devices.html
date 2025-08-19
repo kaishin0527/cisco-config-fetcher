@@ -1,0 +1,64 @@
+
+{% extends "base.html" %}
+
+{% block title %}Import Devices{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>デバイスをインポート</h1>
+    <p>YAML形式のデバイス設定ファイルをインポートします。</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>インポート設定</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="file">YAMLファイルを選択:</label>
+                            <input type="file" class="form-control-file" id="file" name="file" accept=".yaml,.yml" required>
+                            <small class="form-text text-muted">ダウンロードしたデバイス設定ファイルを編集してアップロードしてください。</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">インポート</button>
+                        <a href="{{ url_for('devices') }}" class="btn btn-secondary">キャンセル</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>YAML形式の例</h3>
+                </div>
+                <div class="card-body">
+                    <pre><code>router-01:
+  host: 192.168.1.1
+  device_type: cisco_ios
+  username: admin
+  password: password123
+  secret: enable123
+  connection_type: ssh
+  wait_string: "#"
+  enable_password: enable123
+  group: core
+  description: Core Router
+
+switch-01:
+  host: 192.168.1.2
+  device_type: cisco_ios
+  username: admin
+  password: password123
+  secret: enable123
+  connection_type: ssh
+  wait_string: "#"
+  enable_password: enable123
+  group: core
+  description: Core Switch</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

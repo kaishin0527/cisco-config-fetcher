@@ -1,0 +1,72 @@
+
+
+{% extends "base.html" %}
+
+{% block title %}Import Scenarios{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>シナリオをインポート</h1>
+    <p>YAML形式のシナリオ設定ファイルをインポートします。</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>インポート設定</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="file">YAMLファイルを選択:</label>
+                            <input type="file" class="form-control-file" id="file" name="file" accept=".yaml,.yml" required>
+                            <small class="form-text text-muted">ダウンロードしたシナリオ設定ファイルを編集してアップロードしてください。</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">インポート</button>
+                        <a href="{{ url_for('scenarios') }}" class="btn btn-secondary">キャンセル</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>YAML形式の例</h3>
+                </div>
+                <div class="card-body">
+                    <pre><code>network-health-check:
+  devices:
+    - router-01
+    - switch-01
+  commands:
+    - show version
+    - show running-config
+    - show interfaces
+    - show ip route
+  description: ネットワークヘルスチェック
+  group: monitoring
+  delay: 2
+  timeout: 30
+  save_config: false
+
+interface-configuration:
+  devices:
+    - router-01
+  commands:
+    - configure terminal
+    - interface GigabitEthernet0/0
+    - ip address 192.168.1.1 255.255.255.0
+    - no shutdown
+    - exit
+  description: インターフェース設定
+  group: configuration
+  delay: 3
+  timeout: 60
+  save_config: true</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

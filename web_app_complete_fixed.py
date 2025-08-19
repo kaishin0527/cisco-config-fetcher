@@ -5,6 +5,7 @@ import os
 import subprocess
 import threading
 from datetime import datetime
+import io
 
 # 設定管理モジュールのインポート
 from config_manager import config_manager, get_devices, get_command_groups, get_scenarios
@@ -515,6 +516,130 @@ def execute_scenario_list():
 @app.route('/download/<path:filename>')
 def download_file(filename):
     return send_file(filename, as_attachment=True)
+
+# インポート機能
+@app.route('/import_devices', methods=['GET', 'POST'])
+def import_devices():
+    """デバイスをYAMLファイルからインポート"""
+    if request.method == 'GET':
+        return render_template('import_devices.html')
+    
+    if 'file' not in request.files:
+        flash('ファイルが選択されていません', 'danger')
+        return redirect(url_for('import_devices'))
+    
+    file = request.files['file']
+    if file.filename == '':
+        flash('ファイルが選択されていません', 'danger')
+        return redirect(url_for('import_devices'))
+    
+    if file and file.filename.endswith('.yaml'):
+        try:
+            content = file.read().decode('utf-8')
+            new_devices = yaml.safe_load(content) or {}
+            
+            devices = get_devices()
+            imported_count = 0
+            skipped_count = 0
+            
+            for device_name, device_config in new_devices.items():
+                if device_name and device_config:
+                    if device_name not in devices:
+                        devices[device_name] = device_config
+                        imported_count += 1
+                    else:
+                        skipped_count += 1
+            
+            config_manager.save_config('devices', devices)
+            flash(f'デバイスを {imported_count}件インポートしました（重複: {skipped_count}件）', 'success')
+        except Exception as e:
+            flash(f'ファイルの読み込みに失敗しました: {str(e)}', 'danger')
+    else:
+        flash('YAMLファイルを選択してください', 'danger')
+    
+    return redirect(url_for('devices'))
+
+@app.route('/import_command_groups', methods=['GET', 'POST'])
+def import_command_groups():
+    """コマンドグループをYAMLファイルからインポート"""
+    if request.method == 'GET':
+        return render_template('import_command_groups.html')
+    
+    if 'file' not in request.files:
+        flash('ファイルが選択されていません', 'danger')
+        return redirect(url_for('import_command_groups'))
+    
+    file = request.files['file']
+    if file.filename == '':
+        flash('ファイルが選択されていません', 'danger')
+        return redirect(url_for('import_command_groups'))
+    
+    if file and file.filename.endswith('.yaml'):
+        try:
+            content = file.read().decode('utf-8')
+            new_command_groups = yaml.safe_load(content) or {}
+            
+            command_groups = get_command_groups()
+            imported_count = 0
+            skipped_count = 0
+            
+            for group_name, group_config in new_command_groups.items():
+                if group_name and group_config:
+                    if group_name not in command_groups:
+                        command_groups[group_name] = group_config
+                        imported_count += 1
+                    else:
+                        skipped_count += 1
+            
+            config_manager.save_config('command_groups', command_groups)
+            flash(f'コマンドグループを {imported_count}件インポートしました（重複: {skipped_count}件）', 'success')
+        except Exception as e:
+            flash(f'ファイルの読み込みに失敗しました: {str(e)}', 'danger')
+    else:
+        flash('YAMLファイルを選択してください', 'danger')
+    
+    return redirect(url_for('command_groups'))
+
+@app.route('/import_scenarios', methods=['GET', 'POST'])
+def import_scenarios():
+    """シナリオをYAMLファイルからインポート"""
+    if request.method == 'GET':
+        return render_template('import_scenarios.html')
+    
+    if 'file' not in request.files:
+        flash('ファイルが選択されていません', 'danger')
+        return redirect(url_for('import_scenarios'))
+    
+    file = request.files['file']
+    if file.filename == '':
+        flash('ファイルが選択されていません', 'danger')
+        return redirect(url_for('import_scenarios'))
+    
+    if file and file.filename.endswith('.yaml'):
+        try:
+            content = file.read().decode('utf-8')
+            new_scenarios = yaml.safe_load(content) or {}
+            
+            scenarios = get_scenarios()
+            imported_count = 0
+            skipped_count = 0
+            
+            for scenario_name, scenario_config in new_scenarios.items():
+                if scenario_name and scenario_config:
+                    if scenario_name not in scenarios:
+                        scenarios[scenario_name] = scenario_config
+                        imported_count += 1
+                    else:
+                        skipped_count += 1
+            
+            config_manager.save_config('scenarios', scenarios)
+            flash(f'シナリオを {imported_count}件インポートしました（重複: {skipped_count}件）', 'success')
+        except Exception as e:
+            flash(f'ファイルの読み込みに失敗しました: {str(e)}', 'danger')
+    else:
+        flash('YAMLファイルを選択してください', 'danger')
+    
+    return redirect(url_for('scenarios'))
 
 # 設定バリデーション
 @app.route('/config_validation')
