@@ -51,10 +51,10 @@ devices:
     backup_dir: "backups/switch1"
 ```
 
-### 4. 実行権限の設定
+### 4. Webアプリケーションの実行
 ```bash
-chmod +x fetch_config.py
-chmod +x web_app_complete_fixed.py
+# Webアプリケーションの起動
+python3 web_app_complete_fixed.py
 ```
 
 ## 使用方法
@@ -69,16 +69,16 @@ Webブラウザで `http://localhost:51361` にアクセスします。
 ### コマンドラインインターフェースの使用
 ```bash
 # 設定の取得
-python3 fetch_config.py
+python3 cisco_config_fetcher_final.py
 
 # 特定のデバイスから設定を取得
-python3 fetch_config.py --device router1
+python3 cisco_config_fetcher_final.py --device router1
 
 # 設定の検証
-python3 fetch_config.py --validate
+python3 cisco_config_fetcher_final.py --validate
 
 # 設定のリロード
-python3 fetch_config.py --reload
+python3 cisco_config_fetcher_final.py --reload
 ```
 
 ## 主要機能
@@ -107,14 +107,14 @@ python3 fetch_config.py --reload
 ## ディレクトリ構成
 ```
 cisco-config-fetcher/
-├── fetch_config.py          # メインの設定取得スクリプト
-├── web_app_complete_fixed.py # Webインターフェース
-├── config_manager.py        # 設定管理機能
-├── requirements.txt         # 依存パッケージ
-├── config.yaml              # 設定ファイル
-├── backups/                 # バックアップディレクトリ
-├── templates/               # HTMLテンプレート
-└── static/                  # 静的ファイル
+├── cisco_config_fetcher_final.py # メインの設定取得スクリプト
+├── web_app_complete_fixed.py     # Webインターフェース
+├── config_manager.py             # 設定管理機能
+├── requirements.txt              # 依存パッケージ
+├── config.yaml                   # 設定ファイル
+├── backups/                      # バックアップディレクトリ
+├── templates/                    # HTMLテンプレート
+└── static/                       # 静的ファイル
 ```
 
 ## トラブルシューティング
