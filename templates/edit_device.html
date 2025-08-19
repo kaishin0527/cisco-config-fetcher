@@ -12,46 +12,58 @@
             <input type="text" class="form-control" id="device_name" name="device_name" value="{{ device_name }}" required>
         </div>
         <div class="form-group">
-            <label for="device_ip">Device IP:</label>
-            <input type="text" class="form-control" id="device_ip" name="device_ip" value="{{ device_ip }}" required>
+            <label for="host">Device IP:</label>
+            <input type="text" class="form-control" id="host" name="host" value="{{ device.host }}" required>
         </div>
         <div class="form-group">
             <label for="device_type">Device Type:</label>
             <select class="form-control" id="device_type" name="device_type" required>
-                <option value="cisco_ios" {% if device_type == 'cisco_ios' %}selected{% endif %}>Cisco IOS</option>
-                <option value="cisco_nxos" {% if device_type == 'cisco_nxos' %}selected{% endif %}>Cisco NX-OS</option>
-                <option value="cisco_asa" {% if device_type == 'cisco_asa' %}selected{% endif %}>Cisco ASA</option>
-                <option value="cisco_s300" {% if device_type == 'cisco_s300' %}selected{% endif %}>Cisco S300</option>
-                <option value="juniper" {% if device_type == 'juniper' %}selected{% endif %}>Juniper</option>
-                <option value="arista_eos" {% if device_type == 'arista_eos' %}selected{% endif %}>Arista EOS</option>
-                <option value="huawei" {% if device_type == 'huawei' %}selected{% endif %}>Huawei</option>
-                <option value="fortinet" {% if device_type == 'fortinet' %}selected{% endif %}>Fortinet</option>
-                <option value="other" {% if device_type == 'other' %}selected{% endif %}>Other</option>
+                <option value="cisco_ios" {% if device.device_type == 'cisco_ios' %}selected{% endif %}>Cisco IOS</option>
+                <option value="cisco_nxos" {% if device.device_type == 'cisco_nxos' %}selected{% endif %}>Cisco NX-OS</option>
+                <option value="cisco_asa" {% if device.device_type == 'cisco_asa' %}selected{% endif %}>Cisco ASA</option>
+                <option value="cisco_s300" {% if device.device_type == 'cisco_s300' %}selected{% endif %}>Cisco S300</option>
+                <option value="juniper" {% if device.device_type == 'juniper' %}selected{% endif %}>Juniper</option>
+                <option value="arista_eos" {% if device.device_type == 'arista_eos' %}selected{% endif %}>Arista EOS</option>
+                <option value="huawei" {% if device.device_type == 'huawei' %}selected{% endif %}>Huawei</option>
+                <option value="fortinet" {% if device.device_type == 'fortinet' %}selected{% endif %}>Fortinet</option>
+                <option value="other" {% if device.device_type == 'other' %}selected{% endif %}>Other</option>
             </select>
         </div>
         <div class="form-group">
             <label for="username">Username:</label>
-            <input type="text" class="form-control" id="username" name="username" value="{{ username }}" required>
+            <input type="text" class="form-control" id="username" name="username" value="{{ device.username }}" required>
         </div>
         <div class="form-group">
             <label for="password">Password:</label>
-            <input type="password" class="form-control" id="password" name="password" value="{{ password }}" required>
+            <input type="password" class="form-control" id="password" name="password" value="{{ device.password }}" required>
+        </div>
+        <div class="form-group">
+            <label for="secret">Secret/Enable Password:</label>
+            <input type="password" class="form-control" id="secret" name="secret" value="{{ device.secret }}">
+        </div>
+        <div class="form-group">
+            <label for="connection_type">Connection Type:</label>
+            <select class="form-control" id="connection_type" name="connection_type">
+                <option value="ssh" {% if device.connection_type == 'ssh' %}selected{% endif %}>SSH</option>
+                <option value="telnet" {% if device.connection_type == 'telnet' %}selected{% endif %}>Telnet</option>
+                <option value="serial" {% if device.connection_type == 'serial' %}selected{% endif %}>Serial</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="wait_string">Wait String:</label>
+            <input type="text" class="form-control" id="wait_string" name="wait_string" value="{{ device.wait_string }}">
         </div>
         <div class="form-group">
             <label for="enable_password">Enable Password:</label>
-            <input type="password" class="form-control" id="enable_password" name="enable_password" value="{{ enable_password }}">
+            <input type="password" class="form-control" id="enable_password" name="enable_password" value="{{ device.enable_password }}">
         </div>
         <div class="form-group">
-            <label for="config_commands">Config Commands (one per line):</label>
-            <textarea class="form-control" id="config_commands" name="config_commands" rows="5">{{ config_commands }}</textarea>
-        </div>
-        <div class="form-group">
-            <label for="show_commands">Show Commands (one per line):</label>
-            <textarea class="form-control" id="show_commands" name="show_commands" rows="5">{{ show_commands }}</textarea>
+            <label for="group">Group:</label>
+            <input type="text" class="form-control" id="group" name="group" value="{{ device.group }}">
         </div>
         <div class="form-group">
             <label for="description">Description:</label>
-            <textarea class="form-control" id="description" name="description" rows="3">{{ description }}</textarea>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ device.description }}</textarea>
         </div>
         <button type="submit" class="btn btn-primary">Update Device</button>
         <a href="{{ url_for('devices') }}" class="btn btn-secondary">Cancel</a>

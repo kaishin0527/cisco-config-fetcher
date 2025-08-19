@@ -453,7 +453,7 @@ def execute():
     devices = get_devices()
     command_groups = get_command_groups()
     scenarios = get_scenarios()
-    return render_template('execute.html', devices=devices, command_groups=command_groups, scenarios=scenarios)
+    return render_template('execute.html', devices=devices, command_groups=command_groups, scenarios=scenarios, scenario_lists=scenarios)
 
 @app.route('/run_scenario', methods=['POST'])
 def run_scenario():
