@@ -65,6 +65,154 @@ DEVICES_FILE = 'devices_updated.yaml'
 COMMAND_GROUPS_FILE = 'command_groups.yaml'
 SCENARIO_LIST_FILE = 'scenario_list.yaml'
 
+def create_sample_data():
+    """サンプルデータを作成"""
+    # サンプルデバイス
+    sample_devices = {
+        'router-01': {
+            'host': '192.168.1.1',
+            'device_type': 'cisco_ios',
+            'username': 'admin',
+            'password': 'password',
+            'secret': 'enable_password',
+            'connection_type': 'ssh',
+            'wait_string': '#',
+            'enable_password': 'enable_password',
+            'group': 'routers',
+            'description': 'Core Router 01'
+        },
+        'switch-01': {
+            'host': '192.168.1.2',
+            'device_type': 'cisco_ios',
+            'username': 'admin',
+            'password': 'password',
+            'secret': 'enable_password',
+            'connection_type': 'ssh',
+            'wait_string': '#',
+            'enable_password': 'enable_password',
+            'group': 'switches',
+            'description': 'Core Switch 01'
+        },
+        'firewall-01': {
+            'host': '192.168.1.3',
+            'device_type': 'cisco_asa',
+            'username': 'admin',
+            'password': 'password',
+            'secret': '',
+            'connection_type': 'ssh',
+            'wait_string': '#',
+            'enable_password': '',
+            'group': 'firewalls',
+            'description': 'Firewall 01'
+        }
+    }
+    
+    # サンプルコマンドグループ
+    sample_command_groups = {
+        'basic-config': {
+            'commands': [
+                'show version',
+                'show running-config',
+                'show interface status',
+                'show ip interface brief'
+            ],
+            'description': '基本設定確認コマンド',
+            'group': 'common'
+        },
+        'interface-config': {
+            'commands': [
+                'configure terminal',
+                'interface GigabitEthernet0/1',
+                'description Connected to Server',
+                'switchport mode access',
+                'switchport access vlan 10',
+                'no shutdown',
+                'exit',
+                'write memory'
+            ],
+            'description': 'インターフェース設定コマンド',
+            'group': 'interfaces'
+        },
+        'security-config': {
+            'commands': [
+                'configure terminal',
+                'enable secret secure_password',
+                'line vty 0 4',
+                'password telnet_password',
+                'login',
+                'exit',
+                'access-list 10 permit 192.168.1.0 0.0.0.255',
+                'exit',
+                'write memory'
+            ],
+            'description': 'セキュリティ設定コマンド',
+            'group': 'security'
+        },
+        'troubleshooting': {
+            'commands': [
+                'ping 8.8.8.8',
+                'traceroute 8.8.8.8',
+                'show log',
+                'show arp',
+                'show mac address-table',
+                'show ip route',
+                'show cdp neighbor detail'
+            ],
+            'description': 'トラブルシューティングコマンド',
+            'group': 'troubleshooting'
+        }
+    }
+    
+    # サンプルシナリオ
+    sample_scenarios = {
+        'network-health-check': {
+            'devices': ['router-01', 'switch-01'],
+            'commands': ['basic-config'],
+            'description': 'ネットワークヘルスチェック',
+            'group': 'monitoring',
+            'delay': 2,
+            'timeout': 30,
+            'save_config': False
+        },
+        'interface-configuration': {
+            'devices': ['switch-01'],
+            'commands': ['interface-config'],
+            'description': 'インターフェース設定',
+            'group': 'configuration',
+            'delay': 3,
+            'timeout': 60,
+            'save_config': True
+        },
+        'security-audit': {
+            'devices': ['router-01', 'switch-01', 'firewall-01'],
+            'commands': ['security-config', 'basic-config'],
+            'description': 'セキュリティ監査',
+            'group': 'security',
+            'delay': 5,
+            'timeout': 120,
+            'save_config': True
+        },
+        'troubleshooting-session': {
+            'devices': ['router-01', 'switch-01'],
+            'commands': ['troubleshooting'],
+            'description': 'トラブルシューティングセッション',
+            'group': 'troubleshooting',
+            'delay': 1,
+            'timeout': 45,
+            'save_config': False
+        }
+    }
+    
+    # サンプルデータを保存
+    config_manager.save_config('devices', sample_devices)
+    config_manager.save_config('command_groups', sample_command_groups)
+    config_manager.save_config('scenarios', sample_scenarios)
+    
+    print("サンプルデータを作成しました")
+
+# アプリケーション初期化時にサンプルデータを作成
+create_sample_data()
+
 def load_yaml(file_path):
     """YAMLファイルを読み込む（互換性のため）"""
     try:

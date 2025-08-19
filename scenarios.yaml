@@ -1,19 +1,45 @@
-
-
-# シナリオ設定ファイル
-name: "daily_check"  # シナリオ名（ディレクトリ名に使用）
-steps:
-  - sequence: 1
-    device_group: "core_routers"
-    command_group: "core_commands"
-    wait_after: 30  # 実行後の待機時間（秒）
-    
-  - sequence: 2
-    device_group: "access_switches"
-    command_group: "access_commands"
-    wait_for_user: true  # ユーザー入力を待つ
-    
-  - sequence: 3
-    device_group: "security_devices"
-    command_group: "security_commands"
-
+interface-configuration:
+  commands:
+  - interface-config
+  delay: 3
+  description: インターフェース設定
+  devices:
+  - switch-01
+  group: configuration
+  save_config: true
+  timeout: 60
+network-health-check:
+  commands:
+  - basic-config
+  delay: 2
+  description: ネットワークヘルスチェック
+  devices:
+  - router-01
+  - switch-01
+  group: monitoring
+  save_config: false
+  timeout: 30
+security-audit:
+  commands:
+  - security-config
+  - basic-config
+  delay: 5
+  description: セキュリティ監査
+  devices:
+  - router-01
+  - switch-01
+  - firewall-01
+  group: security
+  save_config: true
+  timeout: 120
+troubleshooting-session:
+  commands:
+  - troubleshooting
+  delay: 1
+  description: トラブルシューティングセッション
+  devices:
+  - router-01
+  - switch-01
+  group: troubleshooting
+  save_config: false
+  timeout: 45

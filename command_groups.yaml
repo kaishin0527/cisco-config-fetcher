@@ -1,22 +1,44 @@
-
-
-# Command groups configuration
-command_groups:
-  core_routers:
-    - "show version"
-    - "show ip route"
-    - "show ip interface brief"
-    - "show running-config"
-    
-  access_switches:
-    - "show version"
-    - "show vlan brief"
-    - "show interface status"
-    - "show spanning-tree"
-    
-  security_devices:
-    - "show version"
-    - "show interface ip brief"
-    - "show access-list"
-    - "show run"
-
+basic-config:
+  commands:
+  - show version
+  - show running-config
+  - show interface status
+  - show ip interface brief
+  description: 基本設定確認コマンド
+  group: common
+interface-config:
+  commands:
+  - configure terminal
+  - interface GigabitEthernet0/1
+  - description Connected to Server
+  - switchport mode access
+  - switchport access vlan 10
+  - no shutdown
+  - exit
+  - write memory
+  description: インターフェース設定コマンド
+  group: interfaces
+security-config:
+  commands:
+  - configure terminal
+  - enable secret secure_password
+  - line vty 0 4
+  - password telnet_password
+  - login
+  - exit
+  - access-list 10 permit 192.168.1.0 0.0.0.255
+  - exit
+  - write memory
+  description: セキュリティ設定コマンド
+  group: security
+troubleshooting:
+  commands:
+  - ping 8.8.8.8
+  - traceroute 8.8.8.8
+  - show log
+  - show arp
+  - show mac address-table
+  - show ip route
+  - show cdp neighbor detail
+  description: トラブルシューティングコマンド
+  group: troubleshooting
