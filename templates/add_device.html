@@ -1,0 +1,108 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>デバイス追加</h1>
+    <a href="{{ url_for('devices') }}" class="btn btn-secondary">戻る</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>新しいデバイスを追加</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">デバイス名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="device_name" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">ホスト <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="host" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">デバイスタイプ <span class="text-danger">*</span></label>
+                        <select class="form-select" name="device_type" required>
+                            <option value="">選択してください</option>
+                            <option value="cisco_ios">Cisco IOS</option>
+                            <option value="cisco_nxos">Cisco NX-OS</option>
+                            <option value="cisco_xr">Cisco IOS-XR</option>
+                            <option value="cisco_asa">Cisco ASA</option>
+                            <option value="cisco_s300">Cisco S300</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">ユーザー名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="username" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">パスワード <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Enableパスワード</label>
+                        <input type="password" class="form-control" name="enable_password">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Secretパスワード</label>
+                        <input type="password" class="form-control" name="secret">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">接続タイプ</label>
+                        <select class="form-select" name="connection_type">
+                            <option value="ssh">SSH</option>
+                            <option value="telnet">Telnet</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">待機文字列</label>
+                        <input type="text" class="form-control" name="wait_string" value="#" placeholder="#">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">グループ</label>
+                        <input type="text" class="form-control" name="group" value="default" placeholder="default">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-end">
+                <a href="{{ url_for('devices') }}" class="btn btn-secondary">キャンセル</a>
+                <button type="submit" class="btn btn-primary">追加</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

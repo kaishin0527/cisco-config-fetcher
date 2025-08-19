@@ -1,0 +1,46 @@
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>コマンドグループ追加</h1>
+    <a href="{{ url_for('command_groups') }}" class="btn btn-secondary">戻る</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>新しいコマンドグループを追加</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div class="mb-3">
+                <label class="form-label">グループ名 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="group_name" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">説明</label>
+                <textarea class="form-control" name="description" rows="2" placeholder="コマンドグループの説明を入力してください"></textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">コマンド <span class="text-danger">*</span></label>
+                <textarea class="form-control" name="commands" rows="6" placeholder="1行に1つのコマンドを入力してください" required></textarea>
+                <div class="form-text">1行に1つのコマンドを入力してください</div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">グループ</label>
+                <input type="text" class="form-control" name="group" value="default" placeholder="default">
+            </div>
+            
+            <div class="text-end">
+                <a href="{{ url_for('command_groups') }}" class="btn btn-secondary">キャンセル</a>
+                <button type="submit" class="btn btn-primary">追加</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

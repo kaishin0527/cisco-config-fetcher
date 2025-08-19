@@ -83,9 +83,13 @@ def devices():
     devices = get_devices()
     return render_template('devices.html', devices=devices)
 
-@app.route('/add_device', methods=['POST'])
+@app.route('/add_device', methods=['GET', 'POST'])
 def add_device():
     """デバイスを追加"""
+    if request.method == 'GET':
+        # フォームを表示
+        return render_template('add_device.html')
+    
     devices = get_devices()
     device_name = request.form['device_name']
     
@@ -158,9 +162,13 @@ def command_groups():
     command_groups = get_command_groups()
     return render_template('command_groups.html', command_groups=command_groups)
 
-@app.route('/add_command_group', methods=['POST'])
+@app.route('/add_command_group', methods=['GET', 'POST'])
 def add_command_group():
     """コマンドグループを追加"""
+    if request.method == 'GET':
+        # フォームを表示
+        return render_template('add_command_group.html')
+    
     command_groups = get_command_groups()
     group_name = request.form['group_name']
     
@@ -221,9 +229,13 @@ def scenarios():
     scenarios = get_scenarios()
     return render_template('scenarios.html', scenarios=scenarios)
 
-@app.route('/add_scenario', methods=['POST'])
+@app.route('/add_scenario', methods=['GET', 'POST'])
 def add_scenario():
     """シナリオを追加"""
+    if request.method == 'GET':
+        # フォームを表示
+        return render_template('add_scenario.html')
+    
     scenarios = get_scenarios()
     scenario_name = request.form['scenario_name']
     

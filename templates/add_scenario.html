@@ -1,0 +1,56 @@
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>シナリオ追加</h1>
+    <a href="{{ url_for('scenarios') }}" class="btn btn-secondary">戻る</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>新しいシナリオを追加</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div class="mb-3">
+                <label class="form-label">シナリオ名 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="scenario_name" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">説明</label>
+                <textarea class="form-control" name="description" rows="2" placeholder="シナリオの説明を入力してください"></textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">デバイス <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="devices" placeholder="device1,device2,device3" required>
+                <div class="form-text">カンマ区切りでデバイス名を入力してください</div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">コマンド <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="commands" placeholder="show version,show running-config" required>
+                <div class="form-text">カンマ区切りでコマンドを入力してください</div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">グループ</label>
+                        <input type="text" class="form-control" name="group" value="default" placeholder="default">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-end">
+                <a href="{{ url_for('scenarios') }}" class="btn btn-secondary">キャンセル</a>
+                <button type="submit" class="btn btn-primary">追加</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
