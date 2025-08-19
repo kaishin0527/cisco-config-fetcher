@@ -64,7 +64,7 @@ python3 web_app_complete_fixed.py
 python3 web_app_complete_fixed.py
 ```
 
-Webブラウザで `http://localhost:51361` にアクセスします。
+Webブラウザで `http://localhost:5000` にアクセスします。
 
 ### コマンドラインインターフェースの使用
 ```bash
