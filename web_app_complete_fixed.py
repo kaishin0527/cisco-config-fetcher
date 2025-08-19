@@ -351,6 +351,18 @@ def run_scenario():
     flash(f'シナリオ "{scenario_name}" を実行中です...', 'info')
     return redirect(url_for('execute'))
 
+# 追加のルート
+@app.route('/execute_scenario_post', methods=['POST'])
+def execute_scenario_post():
+    """シナリオを実行（POST用）"""
+    return run_scenario()
+
+@app.route('/execute_scenario_list')
+def execute_scenario_list():
+    """シナリオ一覧を実行"""
+    scenarios = get_scenarios()
+    return render_template('scenario_lists.html', scenarios=scenarios)
+
 # ダウンロード機能
 @app.route('/download/<path:filename>')
 def download_file(filename):

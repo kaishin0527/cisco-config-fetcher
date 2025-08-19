@@ -7,34 +7,38 @@
 
 {% extends "base.html" %}
 
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>シナリオリスト管理</h1>
-    <a href="/scenario_list/add" class="btn btn-primary">新規追加</a>
-</div>
+{% block title %}Scenario Lists{% endblock %}
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>リスト名</th>
-            <th>シナリオ数</th>
-            <th>操作</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for list_name, scenarios in scenario_lists.items() %}
-        <tr>
-            <td>{{ list_name }}</td>
-            <td>{{ scenarios|length }}</td>
-            <td>
-                <a href="/scenario_list/edit/{{ list_name }}" class="btn btn-sm btn-warning">編集</a>
-                <a href="/scenario_list/delete/{{ list_name }}" class="btn btn-sm btn-danger">削除</a>
-                <a href="/scenario_list/execute/{{ list_name }}" class="btn btn-sm btn-success">実行</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>シナリオリスト管理</h1>
+        <a href="{{ url_for('add_scenario') }}" class="btn btn-primary">新規追加</a>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>リスト名</th>
+                <th>シナリオ数</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for list_name, scenarios in scenarios.items() %}
+            <tr>
+                <td>{{ list_name }}</td>
+                <td>{{ scenarios|length }}</td>
+                <td>
+                    <a href="{{ url_for('edit_scenario', scenario_name=list_name) }}" class="btn btn-sm btn-warning">編集</a>
+                    <a href="{{ url_for('delete_scenario', scenario_name=list_name) }}" class="btn btn-sm btn-danger">削除</a>
+                    <a href="{{ url_for('execute_scenario_post', scenario_name=list_name) }}" class="btn btn-sm btn-success">実行</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
 
 
