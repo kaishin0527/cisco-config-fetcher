@@ -19,33 +19,33 @@
                     <div class="row">
                         <div class="col-md-4">
                             <h5>デバイス</h5>
-                            <p>登録数: {{ config_summary.devices.count }}</p>
-                            {% if config_summary.devices.items %}
+                            <p>登録数: {{ config_summary.devices|length }}</p>
+                            {% if config_summary.devices %}
                             <ul>
-                                {% for device in config_summary.devices.items %}
-                                <li>{{ device }}</li>
+                                {% for device_name in config_summary.devices %}
+                                <li>{{ device_name }}</li>
                                 {% endfor %}
                             </ul>
                             {% endif %}
                         </div>
                         <div class="col-md-4">
                             <h5>コマンドグループ</h5>
-                            <p>登録数: {{ config_summary.command_groups.count }}</p>
-                            {% if config_summary.command_groups.items %}
+                            <p>登録数: {{ config_summary.command_groups|length }}</p>
+                            {% if config_summary.command_groups %}
                             <ul>
-                                {% for group in config_summary.command_groups.items %}
-                                <li>{{ group }}</li>
+                                {% for group_name in config_summary.command_groups %}
+                                <li>{{ group_name }}</li>
                                 {% endfor %}
                             </ul>
                             {% endif %}
                         </div>
                         <div class="col-md-4">
                             <h5>シナリオ</h5>
-                            <p>登録数: {{ config_summary.scenarios.count }}</p>
-                            {% if config_summary.scenarios.items %}
+                            <p>登録数: {{ config_summary.scenarios|length }}</p>
+                            {% if config_summary.scenarios %}
                             <ul>
-                                {% for scenario in config_summary.scenarios.items %}
-                                <li>{{ scenario }}</li>
+                                {% for scenario_name in config_summary.scenarios %}
+                                <li>{{ scenario_name }}</li>
                                 {% endfor %}
                             </ul>
                             {% endif %}
