@@ -354,4 +354,4 @@ def index():
                          config_summary=config_summary)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=51361, debug=True)
+    app.run(host='0.0.0.0', port=51361, debug=True, threaded=True)
