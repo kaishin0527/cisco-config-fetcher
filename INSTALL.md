@@ -17,8 +17,15 @@ git clone https://github.com/kaishin0527/cisco-config-fetcher.git
 cd cisco-config-fetcher
 ```
 
-### 2. 依存パッケージのインストール
+### 2. 仮想環境の作成と依存パッケージのインストール
 ```bash
+# 仮想環境の作成
+python3 -m venv venv
+
+# 仮想環境のアクティベート
+source venv/bin/activate
+
+# 依存パッケージのインストール
 pip install -r requirements.txt
 ```
 
