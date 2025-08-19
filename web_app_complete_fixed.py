@@ -9,6 +9,52 @@ from datetime import datetime
 # 設定管理モジュールのインポート
 from config_manager import config_manager, get_devices, get_command_groups, get_scenarios
 
+def validate_all_configs():
+    """すべての設定ファイルをバリデーション"""
+    results = {
+        'devices': True,
+        'command_groups': True,
+        'scenarios': True
+    }
+    
+    # デバイス設定のバリデーション
+    devices = get_devices()
+    for device_name, device_config in devices.items():
+        required_fields = ['host', 'device_type', 'username']
+        for field in required_fields:
+            if field not in device_config:
+                results['devices'] = False
+                break
+    
+    # コマンドグループ設定のバリデーション
+    command_groups = get_command_groups()
+    for group_name, group_config in command_groups.items():
+        if 'commands' not in group_config:
+            results['command_groups'] = False
+            break
+    
+    # シナリオ設定のバリデーション
+    scenarios = get_scenarios()
+    for scenario_name, scenario_config in scenarios.items():
+        if 'devices' not in scenario_config or 'commands' not in scenario_config:
+            results['scenarios'] = False
+            break
+    
+    return results
+
+def get_config_summary():
+    """設定のサマリーを取得"""
+    devices = get_devices()
+    command_groups = get_command_groups()
+    scenarios = get_scenarios()
+    
+    return {
+        'device_count': len(devices),
+        'command_group_count': len(command_groups),
+        'scenario_count': len(scenarios),
+        'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.secret_key = 'supersecretkey'
@@ -346,12 +392,17 @@ def config_reload():
 @app.route('/')
 def index():
     """ダッシュボード"""
-    validation_results = validate_all_configs()
-    config_summary = get_config_summary()
-    
-    return render_template('index.html', 
-                         validation_results=validation_results,
-                         config_summary=config_summary)
+    try:
+        validation_results = validate_all_configs()
+        config_summary = get_config_summary()
+        
+        return render_template('index.html', 
+                             validation_results=validation_results,
+                             config_summary=config_summary)
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=51361, debug=True, threaded=True)
+    import sys
+    port = 51361 if len(sys.argv) > 1 and sys.argv[1] == '--port' else 51361
+    app.run(host='0.0.0.0', port=port, debug=True, threaded=True)
