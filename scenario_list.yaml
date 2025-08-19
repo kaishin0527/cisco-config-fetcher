@@ -1,0 +1,11 @@
+
+
+
+
+# 実行するシナリオのリスト
+scenarios:
+  - scenario_basic.yaml    # 基本チェック
+  - scenario_advanced.yaml  # 詳細チェック
+
+
+

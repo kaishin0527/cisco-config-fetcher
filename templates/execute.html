@@ -1,0 +1,73 @@
+
+
+
+
+
+
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>シナリオ実行</h1>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>シナリオリストから実行</h5>
+    </div>
+    <div class="card-body">
+        <form action="/execute/scenario_list" method="post">
+            <div class="mb-3">
+                <label class="form-label">シナリオリストを選択</label>
+                <select name="scenario_list" class="form-select">
+                    {% for list_name in scenario_lists.keys() %}
+                    <option value="{{ list_name }}">{{ list_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">実行開始</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>個別シナリオを実行</h5>
+    </div>
+    <div class="card-body">
+        <form action="/execute/scenario" method="post">
+            <div class="mb-3">
+                <label class="form-label">シナリオを選択</label>
+                <select name="scenario" class="form-select">
+                    {% for scenario in scenarios %}
+                    <option value="{{ scenario.name }}">{{ scenario.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">実行開始</button>
+        </form>
+    </div>
+</div>
+
+{% if results %}
+<div class="mt-4">
+    <h3>実行結果</h3>
+    <div class="list-group">
+        {% for result in results %}
+        <a href="/download/{{ result }}" class="list-group-item list-group-item-action">
+            {{ result }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+
+
+
+
+
+

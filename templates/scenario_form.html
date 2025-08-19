@@ -1,0 +1,99 @@
+
+
+
+
+
+
+
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>{% if scenario %}シナリオ編集: {{ scenario.name }}{% else %}新規シナリオ追加{% endif %}</h1>
+    
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">シナリオ名</label>
+            <input type="text" class="form-control" name="name" value="{{ scenario.name if scenario else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">説明</label>
+            <textarea class="form-control" name="description" rows="3">{{ scenario.description if scenario else '' }}</textarea>
+        </div>
+        <div class="mb-3">
+            <h4>ステップ</h4>
+            <div id="steps-container">
+                {% if scenario and scenario.steps %}
+                    {% for step in scenario.steps %}
+                    <div class="card mb-3 step-card">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">シーケンス番号</label>
+                                <input type="number" class="form-control" name="steps-{{ loop.index }}-sequence" value="{{ step.sequence }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">コマンドグループ</label>
+                                <input type="text" class="form-control" name="steps-{{ loop.index }}-command_group" value="{{ step.command_group }}" required>
+                            </div>
+                            <!-- 他のフィールドも同様に追加 -->
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <button type="button" class="btn btn-secondary" id="add-step">ステップ追加</button>
+        </div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="{{ url_for('scenarios') }}" class="btn btn-secondary">キャンセル</a>
+    </form>
+</div>
+
+<script>
+document.getElementById('add-step').addEventListener('click', function() {
+    const container = document.getElementById('steps-container');
+    const stepCount = container.children.length + 1;
+    
+    const stepCard = document.createElement('div');
+    stepCard.className = 'card mb-3 step-card';
+    stepCard.innerHTML = `
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">シーケンス番号</label>
+                <input type="number" class="form-control" name="steps-${stepCount}-sequence" value="${stepCount}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">コマンドグループ</label>
+                <input type="text" class="form-control" name="steps-${stepCount}-command_group" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">デバイスグループ</label>
+                <input type="text" class="form-control" name="steps-${stepCount}-device_group">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">特定デバイス (カンマ区切り)</label>
+                <input type="text" class="form-control" name="steps-${stepCount}-devices">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">実行後待機時間 (秒)</label>
+                <input type="number" class="form-control" name="steps-${stepCount}-wait_after" value="0">
+            </div>
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" name="steps-${stepCount}-wait_for_user" id="wait-${stepCount}">
+                <label class="form-check-label" for="wait-${stepCount}">ユーザー入力待ち</label>
+            </div>
+        </div>
+    `;
+    container.appendChild(stepCard);
+});
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+

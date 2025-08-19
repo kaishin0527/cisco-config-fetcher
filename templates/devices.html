@@ -1,0 +1,43 @@
+
+
+
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>デバイス管理</h1>
+    <a href="/device/add" class="btn btn-primary">新規追加</a>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>デバイス名</th>
+            <th>ホスト</th>
+            <th>タイプ</th>
+            <th>グループ</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for name, device in devices.items() %}
+        <tr>
+            <td>{{ name }}</td>
+            <td>{{ device.host }}</td>
+            <td>{{ device.device_type }}</td>
+            <td>{{ device.group }}</td>
+            <td>
+                <a href="/device/edit/{{ name }}" class="btn btn-sm btn-warning">編集</a>
+                <a href="/device/delete/{{ name }}" class="btn btn-sm btn-danger">削除</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+
+
+

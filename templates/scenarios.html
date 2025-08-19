@@ -1,0 +1,44 @@
+
+
+
+
+
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>シナリオ管理</h1>
+    <a href="/scenario/add" class="btn btn-primary">新規追加</a>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>シナリオ名</th>
+            <th>ステップ数</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for scenario in scenarios %}
+        <tr>
+            <td>{{ scenario.name }}</td>
+            <td>{{ scenario.steps|length }}</td>
+            <td>
+                <a href="/scenario/edit/{{ scenario.name }}" class="btn btn-sm btn-warning">編集</a>
+                <a href="/scenario/delete/{{ scenario.name }}" class="btn btn-sm btn-danger">削除</a>
+                <a href="/scenario/execute/{{ scenario.name }}" class="btn btn-sm btn-success">実行</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+
+
+
+
+

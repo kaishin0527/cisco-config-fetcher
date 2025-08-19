@@ -1,0 +1,41 @@
+
+
+
+
+
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>{% if name %}コマンドグループ編集: {{ name }}{% else %}新規コマンドグループ追加{% endif %}</h1>
+    
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">グループ名</label>
+            <input type="text" class="form-control" name="name" value="{{ name if name else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">コマンド (1行に1コマンド)</label>
+            <textarea class="form-control" name="commands" rows="10" required>
+{%- if group -%}
+{{ '\n'.join(group.commands) }}
+{%- endif -%}</textarea>
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" name="config_mode" id="config_mode" 
+                {% if group and group.config_mode %}checked{% endif %}>
+            <label class="form-check-label" for="config_mode">コンフィグモードで実行</label>
+        </div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="{{ url_for('command_groups') }}" class="btn btn-secondary">キャンセル</a>
+    </form>
+</div>
+{% endblock %}
+
+
+
+
+
+

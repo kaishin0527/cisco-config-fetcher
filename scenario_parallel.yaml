@@ -1,0 +1,20 @@
+
+
+
+
+name: "parallel_execution"
+description: "複数タスクを同時実行"
+steps:
+  - sequence: 1
+    tasks:
+      - device_group: "core_routers"
+        command_group: "core_commands"
+      - device_group: "access_switches"
+        command_group: "access_commands"
+      - devices: ["firewall1"]  # 特定デバイス指定
+        command_group: "security_commands"
+    wait_after: 30
+    wait_for_user: true
+
+
+

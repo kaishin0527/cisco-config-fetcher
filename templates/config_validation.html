@@ -1,0 +1,143 @@
+
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>設定バリデーション</h1>
+    <p>設定ファイルのバリデーション結果を確認します。</p>
+    
+    <!-- 設定サマリー -->
+    {% if config_summary %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>設定サマリー</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h5>デバイス</h5>
+                            <p>登録数: {{ config_summary.devices.count }}</p>
+                            {% if config_summary.devices.items %}
+                            <ul>
+                                {% for device in config_summary.devices.items %}
+                                <li>{{ device }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <h5>コマンドグループ</h5>
+                            <p>登録数: {{ config_summary.command_groups.count }}</p>
+                            {% if config_summary.command_groups.items %}
+                            <ul>
+                                {% for group in config_summary.command_groups.items %}
+                                <li>{{ group }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <h5>シナリオ</h5>
+                            <p>登録数: {{ config_summary.scenarios.count }}</p>
+                            {% if config_summary.scenarios.items %}
+                            <ul>
+                                {% for scenario in config_summary.scenarios.items %}
+                                <li>{{ scenario }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- バリデーション結果 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>バリデーション結果</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h5>デバイス設定</h5>
+                            {% if validation_results.devices %}
+                            <span class="badge bg-success">正常</span>
+                            <p class="text-success mt-2">デバイス設定に問題はありません。</p>
+                            {% else %}
+                            <span class="badge bg-danger">エラー</span>
+                            <p class="text-danger mt-2">デバイス設定に問題があります。</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <h5>コマンドグループ設定</h5>
+                            {% if validation_results.command_groups %}
+                            <span class="badge bg-success">正常</span>
+                            <p class="text-success mt-2">コマンドグループ設定に問題はありません。</p>
+                            {% else %}
+                            <span class="badge bg-danger">エラー</span>
+                            <p class="text-danger mt-2">コマンドグループ設定に問題があります。</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <h5>シナリオ設定</h5>
+                            {% if validation_results.scenarios %}
+                            <span class="badge bg-success">正常</span>
+                            <p class="text-success mt-2">シナリオ設定に問題はありません。</p>
+                            {% else %}
+                            <span class="badge bg-danger">エラー</span>
+                            <p class="text-danger mt-2">シナリオ設定に問題があります。</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 詳細なログ -->
+    {% if detailed_logs %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>詳細なログ</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <ul>
+                            {% for log in detailed_logs %}
+                            <li>{{ log }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- 操作ボタン -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <form method="POST" action="{{ url_for('config_reload') }}" class="d-inline">
+                <button type="submit" class="btn btn-warning">設定を再読み込み</button>
+            </form>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">ダッシュボードに戻る</a>
+            <a href="{{ url_for('devices') }}" class="btn btn-primary">デバイス管理</a>
+            <a href="{{ url_for('command_groups') }}" class="btn btn-primary">コマンドグループ管理</a>
+            <a href="{{ url_for('scenarios') }}" class="btn btn-primary">シナリオ管理</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

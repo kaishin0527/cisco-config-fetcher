@@ -1,0 +1,23 @@
+
+
+
+
+name: "advanced_check"
+description: "詳細な設定とパフォーマンス確認"
+steps:
+  - sequence: 1
+    device_group: "core_routers"
+    command_group: "performance_commands"
+    wait_after: 15
+    
+  - sequence: 2
+    device_group: "access_switches"
+    command_group: "interface_commands"
+    wait_for_user: true
+    
+  - sequence: 3
+    device_group: "security_devices"
+    command_group: "security_audit"
+
+
+

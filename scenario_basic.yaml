@@ -1,0 +1,21 @@
+
+
+
+name: "basic_check"
+description: "基本設定とステータスの確認"
+steps:
+  - sequence: 1
+    device_group: "core_routers"
+    command_group: "core_commands"
+    wait_after: 10
+    
+  - sequence: 2
+    device_group: "access_switches"
+    command_group: "access_commands"
+    wait_after: 5
+    
+  - sequence: 3
+    device_group: "security_devices"
+    command_group: "security_commands"
+
+

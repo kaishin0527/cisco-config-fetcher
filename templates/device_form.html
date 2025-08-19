@@ -1,0 +1,55 @@
+
+
+
+
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>{% if name %}デバイス編集: {{ name }}{% else %}新規デバイス追加{% endif %}</h1>
+    
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">デバイス名</label>
+            <input type="text" class="form-control" name="name" value="{{ name if name else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">ホスト</label>
+            <input type="text" class="form-control" name="host" value="{{ device.host if device else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">デバイスタイプ</label>
+            <input type="text" class="form-control" name="device_type" value="{{ device.device_type if device else 'cisco_ios' }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">ユーザー名</label>
+            <input type="text" class="form-control" name="username" value="{{ device.username if device else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">ログインパスワード</label>
+            <input type="password" class="form-control" name="password" value="{{ device.password if device else '' }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">特権モードパスワード</label>
+            <input type="password" class="form-control" name="secret" value="{{ device.secret if device else '' }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">グループ</label>
+            <input type="text" class="form-control" name="group" value="{{ device.group if device else '' }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">プロンプト正規表現</label>
+            <input type="text" class="form-control" name="prompt_pattern" value="{{ device.prompt_pattern if device else '^[a-zA-Z0-9_\-]+#$' }}">
+        </div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="{{ url_for('devices') }}" class="btn btn-secondary">キャンセル</a>
+    </form>
+</div>
+{% endblock %}
+
+
+
+
+

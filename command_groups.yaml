@@ -1,0 +1,22 @@
+
+
+# Command groups configuration
+command_groups:
+  core_routers:
+    - "show version"
+    - "show ip route"
+    - "show ip interface brief"
+    - "show running-config"
+    
+  access_switches:
+    - "show version"
+    - "show vlan brief"
+    - "show interface status"
+    - "show spanning-tree"
+    
+  security_devices:
+    - "show version"
+    - "show interface ip brief"
+    - "show access-list"
+    - "show run"
+

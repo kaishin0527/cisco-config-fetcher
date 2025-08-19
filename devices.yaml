@@ -1,0 +1,23 @@
+
+# Device configuration
+devices:
+  router1:
+    host: 192.168.1.1
+    device_type: cisco_ios_telnet
+    username: admin
+    group: core_routers
+    prompt: '#'
+    
+  switch1:
+    host: 192.168.1.10
+    device_type: cisco_ios_ssh
+    username: admin
+    group: access_switches
+    prompt: '#'
+    
+  firewall1:
+    host: 192.168.1.100
+    device_type: cisco_asa
+    username: admin
+    group: security_devices
+    prompt: '>'

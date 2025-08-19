@@ -1,0 +1,36 @@
+
+
+
+
+# 更新されたデバイス設定
+devices:
+  router1:
+    host: 192.168.1.1
+    device_type: cisco_ios_telnet
+    username: admin
+    password: !ENV ${DEVICE_LOGIN_PASSWORD}  # ログインパスワード（環境変数）
+    secret: !ENV ${DEVICE_ENABLE_PASSWORD}   # 特権モードパスワード（環境変数）
+    group: core_routers
+    prompt_pattern: "^[a-zA-Z0-9_\-]+#$"
+
+  switch1:
+    host: 192.168.1.10
+    device_type: cisco_ios_ssh
+    username: admin
+    password: !ENV ${DEVICE_LOGIN_PASSWORD}
+    secret: !ENV ${DEVICE_ENABLE_PASSWORD}
+    group: access_switches
+    prompt_pattern: "^[a-zA-Z0-9_\-]+#$"
+
+  firewall1:
+    host: 192.168.1.100
+    device_type: cisco_asa
+    username: admin
+    password: !ENV ${DEVICE_LOGIN_PASSWORD}
+    secret: !ENV ${DEVICE_ENABLE_PASSWORD}
+    group: security_devices
+    prompt_pattern: "^[a-zA-Z0-9_\-]+>$"
+
+
+
+

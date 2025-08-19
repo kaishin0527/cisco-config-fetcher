@@ -1,0 +1,43 @@
+
+
+
+
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>コマンドグループ管理</h1>
+    <a href="/command_group/add" class="btn btn-primary">新規追加</a>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>グループ名</th>
+            <th>コマンド数</th>
+            <th>コンフィグモード</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for name, group in command_groups.items() %}
+        <tr>
+            <td>{{ name }}</td>
+            <td>{{ group.commands|length }}</td>
+            <td>{{ 'はい' if group.config_mode else 'いいえ' }}</td>
+            <td>
+                <a href="/command_group/edit/{{ name }}" class="btn btn-sm btn-warning">編集</a>
+                <a href="/command_group/delete/{{ name }}" class="btn btn-sm btn-danger">削除</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+
+
+
+
