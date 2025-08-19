@@ -20,36 +20,18 @@
                     <div class="row">
                         <div class="col-md-4">
                             <h5>デバイス</h5>
-                            <p>登録数: {{ config_summary.devices.count }}</p>
-                            {% if config_summary.devices.items %}
-                            <ul>
-                                {% for device in config_summary.devices.items %}
-                                <li>{{ device }}</li>
-                                {% endfor %}
-                            </ul>
-                            {% endif %}
+                            <p>登録数: {{ config_summary.device_count }}</p>
+                            <p>最終更新: {{ config_summary.last_updated }}</p>
                         </div>
                         <div class="col-md-4">
                             <h5>コマンドグループ</h5>
-                            <p>登録数: {{ config_summary.command_groups.count }}</p>
-                            {% if config_summary.command_groups.items %}
-                            <ul>
-                                {% for group in config_summary.command_groups.items %}
-                                <li>{{ group }}</li>
-                                {% endfor %}
-                            </ul>
-                            {% endif %}
+                            <p>登録数: {{ config_summary.command_group_count }}</p>
+                            <p>最終更新: {{ config_summary.last_updated }}</p>
                         </div>
                         <div class="col-md-4">
                             <h5>シナリオ</h5>
-                            <p>登録数: {{ config_summary.scenarios.count }}</p>
-                            {% if config_summary.scenarios.items %}
-                            <ul>
-                                {% for scenario in config_summary.scenarios.items %}
-                                <li>{{ scenario }}</li>
-                                {% endfor %}
-                            </ul>
-                            {% endif %}
+                            <p>登録数: {{ config_summary.scenario_count }}</p>
+                            <p>最終更新: {{ config_summary.last_updated }}</p>
                         </div>
                     </div>
                 </div>
