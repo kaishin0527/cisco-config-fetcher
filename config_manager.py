@@ -83,10 +83,27 @@ class ConfigManager:
         scenarios = self.get_scenarios()
         return scenarios.get(scenario_name)
     
-    def reload_all_configs(self):
-        """すべての設定を再読み込み"""
-        self._configs.clear()
-        logger.info("すべての設定を再読み込みしました")
+    def save_config(self, config_type: str, config_data: Dict[str, Any]):
+        """
+        設定データをファイルに保存
+        
+        Args:
+            config_type: 設定タイプ ('devices', 'command_groups', 'scenarios')
+            config_data: 保存する設定データ
+        """
+        config_file = self.config_dir / f"{config_type}.yaml"
+        
+        try:
+            with open(config_file, 'w', encoding='utf-8') as f:
+                yaml.dump(config_data, f, default_flow_style=False, allow_unicode=True)
+            
+            # キャッシュを更新
+            self._configs[config_type] = config_data
+            
+            logger.info(f"設定ファイルを保存しました: {config_file}")
+        except Exception as e:
+            logger.error(f"設定ファイルの保存に失敗しました: {config_file}, エラー: {e}")
+            raise
     
     def validate_config(self, config_type: str) -> bool:
         """設定ファイルのバリデーション"""
