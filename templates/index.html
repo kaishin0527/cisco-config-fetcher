@@ -47,51 +47,6 @@
     </div>
     {% endif %}
     
-    <!-- バリデーション結果 -->
-    {% if validation_results %}
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3>設定バリデーション結果</h3>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <h5>デバイス設定</h5>
-                            {% if validation_results.devices %}
-                            <span class="badge bg-success">正常</span>
-                            {% else %}
-                            <span class="badge bg-danger">エラー</span>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-4">
-                            <h5>コマンドグループ設定</h5>
-                            {% if validation_results.command_groups %}
-                            <span class="badge bg-success">正常</span>
-                            {% else %}
-                            <span class="badge bg-danger">エラー</span>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-4">
-                            <h5>シナリオ設定</h5>
-                            {% if validation_results.scenarios %}
-                            <span class="badge bg-success">正常</span>
-                            {% else %}
-                            <span class="badge bg-danger">エラー</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <a href="{{ url_for('config_validation') }}" class="btn btn-info">詳細なバリデーション結果</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
     
     <div class="row">
         <div class="col-md-4">
@@ -156,17 +111,6 @@
             </div>
         </div>
         
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3>設定バリデーション</h3>
-                </div>
-                <div class="card-body">
-                    <p>設定ファイルのバリデーションを行います。</p>
-                    <a href="{{ url_for('config_validation') }}" class="btn btn-primary">設定バリデーション</a>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %}
