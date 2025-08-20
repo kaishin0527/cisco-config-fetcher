@@ -169,13 +169,11 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h3>設定ファイル</h3>
+                    <h3>設定バリデーション</h3>
                 </div>
                 <div class="card-body">
-                    <p>設定ファイルのダウンロードを行います。</p>
-                    <a href="{{ url_for('download_file', filename='devices_updated.yaml') }}" class="btn btn-primary">デバイス設定</a>
-                    <a href="{{ url_for('download_file', filename='command_groups.yaml') }}" class="btn btn-primary">コマンドグループ</a>
-                    <a href="{{ url_for('download_file', filename='scenario_list.yaml') }}" class="btn btn-primary">シナリオリスト</a>
+                    <p>設定ファイルのバリデーションを行います。</p>
+                    <a href="{{ url_for('config_validation') }}" class="btn btn-primary">設定バリデーション</a>
                 </div>
             </div>
         </div>
