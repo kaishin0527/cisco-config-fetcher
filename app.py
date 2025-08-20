@@ -406,11 +406,31 @@ def add_scenario():
 def edit_scenario(scenario_name):
     """シナリオを編集"""
     scenarios = get_scenarios()
+    devices = get_devices()
+    
+    # デバイスグループの取得
+    device_groups = list(set(device['group'] for device in devices.values() if 'group' in device))
     
     if request.method == 'POST':
         if scenario_name in scenarios:
+            # デバイス選択の処理
+            device_selection = request.form.get('device_selection', 'individual')
+            if device_selection == 'group':
+                # グループ選択の場合
+                selected_groups = request.form.getlist('device_groups')
+                # グループに属するデバイスを取得
+                selected_devices = []
+                for group in selected_groups:
+                    for device_name, device in devices.items():
+                        if device.get('group') == group:
+                            selected_devices.append(device_name)
+                devices_list = selected_devices
+            else:
+                # 個別デバイス選択の場合
+                devices_list = request.form.getlist('devices')
+            
             scenarios[scenario_name] = {
-                'devices': request.form['devices'].split(','),
+                'devices': devices_list,
                 'commands': request.form['commands'].split(','),
                 'description': request.form.get('description', ''),
                 'group': request.form.get('group', 'default')
@@ -423,7 +443,7 @@ def edit_scenario(scenario_name):
     else:
         scenario = scenarios.get(scenario_name)
         if scenario:
-            return render_template('edit_scenario.html', scenario=scenario, scenario_name=scenario_name)
+            return render_template('edit_scenario.html', scenario=scenario, scenario_name=scenario_name, devices=devices)
         else:
             flash('シナリオが見つかりません', 'danger')
             return redirect(url_for('scenarios'))
