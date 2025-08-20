@@ -17,8 +17,41 @@
             <textarea class="form-control" id="description" name="description" rows="3">{{ scenario.description }}</textarea>
         </div>
         <div class="form-group">
-            <label for="devices">Devices (comma separated):</label>
-            <textarea class="form-control" id="devices" name="devices" rows="5">{{ scenario.devices|join(', ') }}</textarea>
+            <label for="devices">Devices:</label>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="device_selection" id="select_individual" value="individual" checked>
+                    <label class="form-check-label" for="select_individual">Select individual devices</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="device_selection" id="select_group" value="group">
+                    <label class="form-check-label" for="select_group">Select device groups</label>
+                </div>
+            </div>
+            
+            <!-- Individual devices selection -->
+            <div id="individual_devices">
+                <select class="form-select" id="devices" name="devices" multiple size="8">
+                    {% for device_name, device in devices.items() %}
+                    <option value="{{ device_name }}" {% if device_name in scenario.devices %}selected{% endif %}>
+                        {{ device_name }} ({{ device.group }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple devices</small>
+            </div>
+            
+            <!-- Device groups selection -->
+            <div id="device_groups" style="display: none;">
+                <select class="form-select" id="device_groups" name="device_groups" multiple size="8">
+                    {% for device_name, device in devices.items() %}
+                    <option value="{{ device.group }}" {% if device.group in scenario.device_groups|default([]) %}selected{% endif %}>
+                        {{ device.group }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple groups</small>
+            </div>
         </div>
         <div class="form-group">
             <label for="commands">Commands (comma separated):</label>
@@ -47,5 +80,29 @@
         <a href="{{ url_for('scenarios') }}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const individualRadio = document.getElementById('select_individual');
+    const groupRadio = document.getElementById('select_group');
+    const individualDevices = document.getElementById('individual_devices');
+    const deviceGroups = document.getElementById('device_groups');
+
+    function toggleDeviceSelection() {
+        if (individualRadio.checked) {
+            individualDevices.style.display = 'block';
+            deviceGroups.style.display = 'none';
+        } else {
+            individualDevices.style.display = 'none';
+            deviceGroups.style.display = 'block';
+        }
+    }
+
+    individualRadio.addEventListener('change', toggleDeviceSelection);
+    groupRadio.addEventListener('change', toggleDeviceSelection);
+});
+</script>
 {% endblock %}
+
 
