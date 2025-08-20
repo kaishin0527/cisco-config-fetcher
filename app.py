@@ -521,6 +521,49 @@ def run_scenario():
     return redirect(url_for('execute'))
 
 # 追加のルート
+@app.route('/execute_scenario/<scenario_name>', methods=['GET'])
+def execute_scenario(scenario_name):
+    """シナリオを実行（GET用）"""
+    scenarios = get_scenarios()
+    
+    if scenario_name not in scenarios:
+        flash('シナリオが見つかりません', 'danger')
+        return redirect(url_for('execute'))
+    
+    scenario = scenarios[scenario_name]
+    
+    # 非同期で実行
+    def execute_scenario():
+        try:
+            # ここで実際の実行処理を行う
+            # 現在はダミーの実行結果を生成
+            result = {
+                'scenario_name': scenario_name,
+                'devices': scenario['devices'],
+                'commands': scenario['commands'],
+                'status': 'success',
+                'output': f'シナリオ "{scenario_name}" を実行しました',
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            
+            # 結果を保存
+            result_dir = os.path.join('results', datetime.now().strftime('%Y%m%d'))
+            os.makedirs(result_dir, exist_ok=True)
+            result_file = os.path.join(result_dir, f'{scenario_name}_{datetime.now().strftime("%H%M%S")}.yaml')
+            
+            with open(result_file, 'w', encoding='utf-8') as f:
+                yaml.dump(result, f, default_flow_style=False, allow_unicode=True)
+                
+        except Exception as e:
+            print(f"シナリオ実行エラー: {e}")
+    
+    # 別スレッドで実行
+    thread = threading.Thread(target=execute_scenario)
+    thread.start()
+    
+    flash(f'シナリオ "{scenario_name}" を実行中です...', 'info')
+    return redirect(url_for('execute'))
+
 @app.route('/execute_scenario_post', methods=['POST'])
 def execute_scenario_post():
     """シナリオを実行（POST用）"""
