@@ -95,10 +95,19 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up device selection toggle...');
+    
     const individualRadio = document.getElementById('select_individual');
     const groupRadio = document.getElementById('select_group');
     const individualDevices = document.getElementById('individual_devices');
     const deviceGroups = document.getElementById('device_groups');
+    
+    console.log('Elements found:', {
+        individualRadio: individualRadio,
+        groupRadio: groupRadio,
+        individualDevices: individualDevices,
+        deviceGroups: deviceGroups
+    });
 
     function toggleDeviceSelection() {
         console.log('Toggling device selection...');
@@ -119,8 +128,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial call to set correct state
     toggleDeviceSelection();
     
-    individualRadio.addEventListener('change', toggleDeviceSelection);
-    groupRadio.addEventListener('change', toggleDeviceSelection);
+    // Add event listeners
+    if (individualRadio) {
+        individualRadio.addEventListener('click', toggleDeviceSelection);
+        individualRadio.addEventListener('change', toggleDeviceSelection);
+    }
+    if (groupRadio) {
+        groupRadio.addEventListener('click', toggleDeviceSelection);
+        groupRadio.addEventListener('change', toggleDeviceSelection);
+    }
+    
+    console.log('Event listeners added successfully');
 });
 </script>
 {% endblock %}
