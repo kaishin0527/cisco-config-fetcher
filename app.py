@@ -616,10 +616,44 @@ def execute_scenario(scenario_name):
     flash(f'シナリオ "{scenario_name}" を実行中です...', 'info')
     return redirect(url_for('execute'))
 
-@app.route('/execute_scenario_post', methods=['POST'])
+@app.route('/execute_scenario_post', methods=['GET', 'POST'])
 def execute_scenario_post():
-    """シナリオを実行（POST用）"""
-    return run_scenario()
+    """シナリオを実行（GET/POST用）"""
+    scenario_name = request.args.get('scenario_name') or request.form.get('scenario_name')
+    
+    if not scenario_name:
+        flash('シナリオ名が指定されていません', 'danger')
+        return redirect(url_for('execute'))
+    
+    # シナリオリストのデータを読み込む
+    try:
+        if os.path.exists(f'scenario_lists/{scenario_name}.yaml'):
+            with open(f'scenario_lists/{scenario_name}.yaml', 'r', encoding='utf-8') as f:
+                scenario_list_data = yaml.safe_load(f)
+                if scenario_list_data and 'scenarios' in scenario_list_data:
+                    # シナリオリスト内のすべてのシナリオを実行
+                    scenarios_to_run = scenario_list_data['scenarios']
+                    
+                    # 非同期で実行
+                    def execute_scenario_list():
+                        try:
+                            for scenario_name in scenarios_to_run:
+                                run_scenario(scenario_name)
+                        except Exception as e:
+                            print(f"シナリオリスト実行エラー: {e}")
+                    
+                    thread = threading.Thread(target=execute_scenario_list)
+                    thread.daemon = True
+                    thread.start()
+                    
+                    flash(f'シナリオリスト "{scenario_name}" 内の {len(scenarios_to_run)} 件のシナリオを実行中です...', 'info')
+                    return redirect(url_for('scenario_lists'))
+    
+    except Exception as e:
+        print(f"シナリオリスト読み込みエラー: {e}")
+    
+    # シナリオリストが存在しない場合は通常のシナリオ実行
+    return run_scenario(scenario_name)
 
 @app.route('/execute_scenario_list')
 def execute_scenario_list():
