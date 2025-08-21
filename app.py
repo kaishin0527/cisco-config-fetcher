@@ -657,10 +657,7 @@ def execute_scenario_post():
         print(f"シナリオリスト読み込みエラー: {e}")
     
     # シナリオリストが存在しない場合は通常のシナリオ実行
-    # Flaskルートとしてではなく、関数として呼び出す
-    from functools import partial
-    run_scenario_func = partial(run_scenario.__wrapped__ if hasattr(run_scenario, '__wrapped__') else run_scenario, scenario_name)
-    return run_scenario_func()
+    return _execute_scenario_logic(scenario_name)
 
 @app.route('/execute_scenario_list')
 def execute_scenario_list():
