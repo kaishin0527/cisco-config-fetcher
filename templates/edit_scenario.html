@@ -44,9 +44,9 @@
             <!-- Device groups selection -->
             <div id="device_groups" style="display: none;">
                 <select class="form-select" id="device_groups" name="device_groups" multiple size="8">
-                    {% for device_name, device in devices.items() %}
-                    <option value="{{ device.group }}" {% if device.group in scenario.device_groups|default([]) %}selected{% endif %}>
-                        {{ device.group }}
+                    {% for group in device_groups|unique %}
+                    <option value="{{ group }}" {% if group in scenario.device_groups|default([]) %}selected{% endif %}>
+                        {{ group }}
                     </option>
                     {% endfor %}
                 </select>

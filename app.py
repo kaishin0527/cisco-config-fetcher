@@ -443,7 +443,7 @@ def edit_scenario(scenario_name):
     else:
         scenario = scenarios.get(scenario_name)
         if scenario:
-            return render_template('edit_scenario.html', scenario=scenario, scenario_name=scenario_name, devices=devices)
+            return render_template('edit_scenario.html', scenario=scenario, scenario_name=scenario_name, devices=devices, device_groups=device_groups)
         else:
             flash('シナリオが見つかりません', 'danger')
             return redirect(url_for('scenarios'))
