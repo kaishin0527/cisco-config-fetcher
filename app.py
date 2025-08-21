@@ -529,9 +529,11 @@ def execute():
     return render_template('execute.html', devices=devices, command_groups=command_groups, scenarios=scenarios, scenario_lists=scenarios)
 
 @app.route('/run_scenario', methods=['POST'])
-def run_scenario():
+def run_scenario(scenario_name=None):
     """シナリオを実行"""
-    scenario_name = request.form['scenario_name']
+    if scenario_name is None:
+        scenario_name = request.form['scenario_name']
+    
     scenarios = get_scenarios()
     
     if scenario_name not in scenarios:
