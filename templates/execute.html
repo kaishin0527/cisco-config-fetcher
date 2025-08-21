@@ -40,9 +40,9 @@
         <form action="{{ url_for('execute_scenario_post') }}" method="post">
             <div class="mb-3">
                 <label class="form-label">シナリオを選択</label>
-                <select name="scenario" class="form-select">
-                    {% for scenario in scenarios %}
-                    <option value="{{ scenario.name }}">{{ scenario.name }}</option>
+                <select name="scenario_name" class="form-select">
+                    {% for scenario_name in scenarios.keys() %}
+                    <option value="{{ scenario_name }}">{{ scenario_name }}</option>
                     {% endfor %}
                 </select>
             </div>

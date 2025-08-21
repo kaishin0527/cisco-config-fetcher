@@ -526,7 +526,23 @@ def execute():
     devices = get_devices()
     command_groups = get_command_groups()
     scenarios = get_scenarios()
-    return render_template('execute.html', devices=devices, command_groups=command_groups, scenarios=scenarios, scenario_lists=scenarios)
+    
+    # シナリオリストのデータを読み込む
+    scenario_lists_data = {}
+    try:
+        if os.path.exists('scenario_lists'):
+            for filename in os.listdir('scenario_lists'):
+                if filename.endswith('.yaml'):
+                    list_name = filename[:-5]  # .yamlを除く
+                    with open(f'scenario_lists/{filename}', 'r', encoding='utf-8') as f:
+                        list_data = yaml.safe_load(f)
+                        if list_data and 'scenarios' in list_data:
+                            scenario_lists_data[list_name] = list_data['scenarios']
+    except Exception as e:
+        print(f"シナリオリストの読み込みエラー: {e}")
+        scenario_lists_data = {}
+    
+    return render_template('execute.html', devices=devices, command_groups=command_groups, scenarios=scenarios, scenario_lists=scenario_lists_data)
 
 def _execute_scenario_logic(scenario_name):
     """シナリオ実行のロジック（Flaskルートではない）"""
@@ -659,9 +675,14 @@ def execute_scenario_post():
     # シナリオリストが存在しない場合は通常のシナリオ実行
     return _execute_scenario_logic(scenario_name)
 
-@app.route('/execute_scenario_list')
+@app.route('/execute_scenario_list', methods=['GET', 'POST'])
 def execute_scenario_list():
     """シナリオ一覧を実行"""
+    if request.method == 'POST':
+        scenario_list_name = request.form.get('scenario_list')
+        if scenario_list_name:
+            return redirect(url_for('execute_scenario_post', scenario_name=scenario_list_name))
+    
     scenarios = get_scenarios()
     return render_template('scenario_lists.html', scenarios=scenarios)
 
