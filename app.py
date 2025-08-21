@@ -468,6 +468,34 @@ def scenario_lists():
     scenarios = get_scenarios()
     return render_template('scenario_lists.html', scenarios=scenarios)
 
+@app.route('/edit_scenario_list/<list_name>', methods=['GET', 'POST'])
+def edit_scenario_list(list_name):
+    """シナリオリストを編集"""
+    scenarios = get_scenarios()
+    
+    if request.method == 'POST':
+        # シナリオリストの更新処理
+        selected_scenarios = request.form.getlist('scenarios')
+        
+        # シナリオリストを保存（ここではシナリオ名を保存）
+        scenario_list_data = {
+            'name': list_name,
+            'scenarios': selected_scenarios,
+            'description': request.form.get('description', ''),
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        # シナリオリストを保存（ファイルやデータベースに保存）
+        with open(f'scenario_lists/{list_name}.yaml', 'w', encoding='utf-8') as f:
+            yaml.dump(scenario_list_data, f, default_flow_style=False, allow_unicode=True)
+        
+        flash('シナリオリストを更新しました', 'success')
+        return redirect(url_for('scenario_lists'))
+    else:
+        # 編集フォームを表示
+        # ここでは既存のシナリオをすべて表示
+        return render_template('edit_scenario_list.html', scenarios=scenarios, list_name=list_name)
+
 # 実行管理
 @app.route('/execute')
 def execute():
