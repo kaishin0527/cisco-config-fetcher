@@ -5,7 +5,6 @@
 {% block title %}Edit Scenario{% endblock %}
 
 {% block content %}
-{% endblock %}
 <div class="container">
     <h1>Edit Scenario</h1>
     <form method="POST" action="{{ url_for('edit_scenario', scenario_name=scenario_name) }}">
@@ -81,6 +80,7 @@
         <a href="{{ url_for('scenarios') }}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
+{% endblock %}
 
 {% block scripts %}
 <script>
