@@ -1,0 +1,43 @@
+
+{% extends "base.html" %}
+
+{% block title %}Edit Scenario List{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>シナリオリスト編集: {{ list_name }}</h1>
+        <a href="{{ url_for('scenario_lists') }}" class="btn btn-secondary">戻る</a>
+    </div>
+
+    <form method="POST" action="{{ url_for('edit_scenario_list', list_name=list_name) }}">
+        <div class="form-group">
+            <label for="list_name">リスト名:</label>
+            <input type="text" class="form-control" id="list_name" name="list_name" value="{{ list_name }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">説明:</label>
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>選択するシナリオ:</label>
+            <div class="mt-3">
+                {% for scenario_name, scenario in scenarios.items() %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="scenarios" id="scenario_{{ scenario_name }}" value="{{ scenario_name }}">
+                    <label class="form-check-label" for="scenario_{{ scenario_name }}">
+                        {{ scenario_name }} - {{ scenario.description }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            <small class="form-text text-muted">実行するシナリオを選択してください</small>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">更新</button>
+        <a href="{{ url_for('scenario_lists') }}" class="btn btn-secondary">キャンセル</a>
+    </form>
+</div>
+{% endblock %}
