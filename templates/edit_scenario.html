@@ -17,7 +17,7 @@
             <textarea class="form-control" id="description" name="description" rows="3">{{ scenario.description }}</textarea>
         </div>
         <div class="form-group">
-            <label for="devices">Devices:</label>
+            <label>Devices:</label>
             <div class="mb-3">
                 <div class="form-check">
                     <input class="form-check-input" type="radio" name="device_selection" id="select_individual" value="individual" checked>
@@ -94,51 +94,84 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, setting up device selection toggle...');
+// Function to toggle device selection visibility
+function toggleDeviceSelection() {
+    console.log('toggleDeviceSelection called');
     
     const individualRadio = document.getElementById('select_individual');
     const groupRadio = document.getElementById('select_group');
     const individualDevices = document.getElementById('individual_devices');
     const deviceGroups = document.getElementById('device_groups');
     
-    console.log('Elements found:', {
+    console.log('Elements:', {
         individualRadio: individualRadio,
         groupRadio: groupRadio,
         individualDevices: individualDevices,
         deviceGroups: deviceGroups
     });
-
-    function toggleDeviceSelection() {
-        console.log('Toggling device selection...');
-        console.log('Individual radio checked:', individualRadio.checked);
-        console.log('Group radio checked:', groupRadio.checked);
-        
-        if (individualRadio.checked) {
-            console.log('Showing individual devices, hiding device groups');
-            individualDevices.style.display = 'block';
-            deviceGroups.style.display = 'none';
-        } else {
-            console.log('Hiding individual devices, showing device groups');
-            individualDevices.style.display = 'none';
-            deviceGroups.style.display = 'block';
-        }
+    
+    if (!individualRadio || !groupRadio || !individualDevices || !deviceGroups) {
+        console.error('Required elements not found!');
+        return;
     }
+    
+    if (individualRadio.checked) {
+        console.log('Individual mode - showing devices, hiding groups');
+        individualDevices.style.display = 'block';
+        deviceGroups.style.display = 'none';
+    } else {
+        console.log('Group mode - hiding devices, showing groups');
+        individualDevices.style.display = 'none';
+        deviceGroups.style.display = 'block';
+    }
+}
 
-    // Initial call to set correct state
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - initializing device selection');
+    
+    const individualRadio = document.getElementById('select_individual');
+    const groupRadio = document.getElementById('select_group');
+    
+    // Set initial state
     toggleDeviceSelection();
     
-    // Add event listeners
+    // Add event listeners with error handling
     if (individualRadio) {
-        individualRadio.addEventListener('click', toggleDeviceSelection);
         individualRadio.addEventListener('change', toggleDeviceSelection);
-    }
-    if (groupRadio) {
-        groupRadio.addEventListener('click', toggleDeviceSelection);
-        groupRadio.addEventListener('change', toggleDeviceSelection);
+        individualRadio.addEventListener('click', toggleDeviceSelection);
+        console.log('Added event listeners to individual radio');
+    } else {
+        console.error('Individual radio button not found!');
     }
     
-    console.log('Event listeners added successfully');
+    if (groupRadio) {
+        groupRadio.addEventListener('change', toggleDeviceSelection);
+        groupRadio.addEventListener('click', toggleDeviceSelection);
+        console.log('Added event listeners to group radio');
+    } else {
+        console.error('Group radio button not found!');
+    }
+    
+    // Also add click listeners to labels
+    const individualLabel = document.querySelector('label[for="select_individual"]');
+    const groupLabel = document.querySelector('label[for="select_group"]');
+    
+    if (individualLabel) {
+        individualLabel.addEventListener('click', toggleDeviceSelection);
+        console.log('Added click listener to individual label');
+    }
+    
+    if (groupLabel) {
+        groupLabel.addEventListener('click', toggleDeviceSelection);
+        console.log('Added click listener to group label');
+    }
+});
+
+// Fallback: also run on window load
+window.addEventListener('load', function() {
+    console.log('Window loaded - final check');
+    toggleDeviceSelection();
 });
 </script>
 {% endblock %}
