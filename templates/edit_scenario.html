@@ -101,15 +101,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const deviceGroups = document.getElementById('device_groups');
 
     function toggleDeviceSelection() {
+        console.log('Toggling device selection...');
+        console.log('Individual radio checked:', individualRadio.checked);
+        console.log('Group radio checked:', groupRadio.checked);
+        
         if (individualRadio.checked) {
+            console.log('Showing individual devices, hiding device groups');
             individualDevices.style.display = 'block';
             deviceGroups.style.display = 'none';
         } else {
+            console.log('Hiding individual devices, showing device groups');
             individualDevices.style.display = 'none';
             deviceGroups.style.display = 'block';
         }
     }
 
+    // Initial call to set correct state
+    toggleDeviceSelection();
+    
     individualRadio.addEventListener('change', toggleDeviceSelection);
     groupRadio.addEventListener('change', toggleDeviceSelection);
 });
