@@ -30,9 +30,13 @@
                 <td>{{ list_name }}</td>
                 <td>
                     {% if scenario_lists[list_name] %}
-                        {{ scenario_lists[list_name]|length }}
+                        <div class="scenario-list">
+                            {% for scenario_name in scenario_lists[list_name] %}
+                                <span class="badge bg-secondary me-1">{{ scenario_name }}</span>
+                            {% endfor %}
+                        </div>
                     {% else %}
-                        0
+                        <span class="text-muted">選択されたシナリオなし</span>
                     {% endif %}
                 </td>
                 <td>
