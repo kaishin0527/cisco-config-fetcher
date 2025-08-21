@@ -94,7 +94,7 @@
 
 {% block scripts %}
 <script>
-// Function to toggle device selection visibility
+// Function to toggle device selection visibility and enable/disable checkboxes
 function toggleDeviceSelection() {
     console.log('toggleDeviceSelection called');
     
@@ -116,13 +116,47 @@ function toggleDeviceSelection() {
     }
     
     if (individualRadio.checked) {
-        console.log('Individual mode - showing devices, hiding groups');
+        console.log('Individual mode - enabling individual devices, disabling device groups');
+        // Show individual devices, hide device groups
         individualDevices.style.display = 'block';
         deviceGroups.style.display = 'none';
+        
+        // Enable individual device checkboxes
+        const individualCheckboxes = individualDevices.querySelectorAll('input[type="checkbox"]');
+        individualCheckboxes.forEach(checkbox => {
+            checkbox.disabled = false;
+            checkbox.closest('.form-check').style.opacity = '1';
+            checkbox.closest('.form-check').style.pointerEvents = 'auto';
+        });
+        
+        // Disable device group checkboxes
+        const groupCheckboxes = deviceGroups.querySelectorAll('input[type="checkbox"]');
+        groupCheckboxes.forEach(checkbox => {
+            checkbox.disabled = true;
+            checkbox.closest('.form-check').style.opacity = '0.5';
+            checkbox.closest('.form-check').style.pointerEvents = 'none';
+        });
     } else {
-        console.log('Group mode - hiding devices, showing groups');
+        console.log('Group mode - disabling individual devices, enabling device groups');
+        // Hide individual devices, show device groups
         individualDevices.style.display = 'none';
         deviceGroups.style.display = 'block';
+        
+        // Disable individual device checkboxes
+        const individualCheckboxes = individualDevices.querySelectorAll('input[type="checkbox"]');
+        individualCheckboxes.forEach(checkbox => {
+            checkbox.disabled = true;
+            checkbox.closest('.form-check').style.opacity = '0.5';
+            checkbox.closest('.form-check').style.pointerEvents = 'none';
+        });
+        
+        // Enable device group checkboxes
+        const groupCheckboxes = deviceGroups.querySelectorAll('input[type="checkbox"]');
+        groupCheckboxes.forEach(checkbox => {
+            checkbox.disabled = false;
+            checkbox.closest('.form-check').style.opacity = '1';
+            checkbox.closest('.form-check').style.pointerEvents = 'auto';
+        });
     }
 }
 
