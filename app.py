@@ -528,12 +528,8 @@ def execute():
     scenarios = get_scenarios()
     return render_template('execute.html', devices=devices, command_groups=command_groups, scenarios=scenarios, scenario_lists=scenarios)
 
-@app.route('/run_scenario', methods=['POST'])
-def run_scenario(scenario_name=None):
-    """シナリオを実行"""
-    if scenario_name is None:
-        scenario_name = request.form['scenario_name']
-    
+def _execute_scenario_logic(scenario_name):
+    """シナリオ実行のロジック（Flaskルートではない）"""
     scenarios = get_scenarios()
     
     if scenario_name not in scenarios:
@@ -573,6 +569,12 @@ def run_scenario(scenario_name=None):
     
     flash(f'シナリオ "{scenario_name}" を実行中です...', 'info')
     return redirect(url_for('execute'))
+
+@app.route('/run_scenario', methods=['POST'])
+def run_scenario():
+    """シナリオを実行（Flaskルート）"""
+    scenario_name = request.form['scenario_name']
+    return _execute_scenario_logic(scenario_name)
 
 # 追加のルート
 @app.route('/execute_scenario/<scenario_name>', methods=['GET'])
@@ -655,7 +657,10 @@ def execute_scenario_post():
         print(f"シナリオリスト読み込みエラー: {e}")
     
     # シナリオリストが存在しない場合は通常のシナリオ実行
-    return run_scenario(scenario_name)
+    # Flaskルートとしてではなく、関数として呼び出す
+    from functools import partial
+    run_scenario_func = partial(run_scenario.__wrapped__ if hasattr(run_scenario, '__wrapped__') else run_scenario, scenario_name)
+    return run_scenario_func()
 
 @app.route('/execute_scenario_list')
 def execute_scenario_list():
