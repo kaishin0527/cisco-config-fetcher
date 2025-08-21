@@ -473,6 +473,9 @@ def edit_scenario_list(list_name):
     """シナリオリストを編集"""
     scenarios = get_scenarios()
     
+    # scenario_listsディレクトリが存在しない場合は作成
+    os.makedirs('scenario_lists', exist_ok=True)
+    
     if request.method == 'POST':
         # シナリオリストの更新処理
         selected_scenarios = request.form.getlist('scenarios')
@@ -485,12 +488,16 @@ def edit_scenario_list(list_name):
             'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         
-        # シナリオリストを保存（ファイルやデータベースに保存）
-        with open(f'scenario_lists/{list_name}.yaml', 'w', encoding='utf-8') as f:
-            yaml.dump(scenario_list_data, f, default_flow_style=False, allow_unicode=True)
-        
-        flash('シナリオリストを更新しました', 'success')
-        return redirect(url_for('scenario_lists'))
+        try:
+            # シナリオリストを保存（ファイルやデータベースに保存）
+            with open(f'scenario_lists/{list_name}.yaml', 'w', encoding='utf-8') as f:
+                yaml.dump(scenario_list_data, f, default_flow_style=False, allow_unicode=True)
+            
+            flash('シナリオリストを更新しました', 'success')
+            return redirect(url_for('scenario_lists'))
+        except Exception as e:
+            flash(f'シナリオリストの保存に失敗しました: {str(e)}', 'danger')
+            return redirect(url_for('scenario_lists'))
     else:
         # 編集フォームを表示
         # ここでは既存のシナリオをすべて表示
