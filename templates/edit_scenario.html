@@ -35,7 +35,7 @@
                     {% for device_name, device in devices.items() %}
                     <div class="col-md-6 mb-2">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="individual_device" id="device_{{ device_name }}" value="{{ device_name }}" {% if device_name in scenario.devices %}checked{% endif %}>
+                            <input class="form-check-input" type="checkbox" name="individual_devices" id="device_{{ device_name }}" value="{{ device_name }}" {% if device_name in scenario.devices %}checked{% endif %}>
                             <label class="form-check-label" for="device_{{ device_name }}">
                                 {{ device_name }} ({{ device.group }})
                             </label>
@@ -43,6 +43,7 @@
                     </div>
                     {% endfor %}
                 </div>
+                <small class="form-text text-muted">Select multiple individual devices</small>
             </div>
             
             <!-- Device groups selection -->
@@ -51,7 +52,7 @@
                     {% for group in device_groups|unique %}
                     <div class="col-md-6 mb-2">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="device_group" id="group_{{ group }}" value="{{ group }}" {% if group in scenario.device_groups|default([]) %}checked{% endif %}>
+                            <input class="form-check-input" type="checkbox" name="device_groups" id="group_{{ group }}" value="{{ group }}" {% if group in scenario.device_groups|default([]) %}checked{% endif %}>
                             <label class="form-check-label" for="group_{{ group }}">
                                 {{ group }}
                             </label>
@@ -59,6 +60,7 @@
                     </div>
                     {% endfor %}
                 </div>
+                <small class="form-text text-muted">Select multiple device groups</small>
             </div>
         </div>
         <div class="form-group">

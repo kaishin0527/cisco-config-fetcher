@@ -417,23 +417,18 @@ def edit_scenario(scenario_name):
             device_selection = request.form.get('device_selection', 'individual')
             if device_selection == 'group':
                 # グループ選択の場合
-                selected_group = request.form.get('device_group')
-                if selected_group:
-                    # グループに属するデバイスを取得
-                    selected_devices = []
+                selected_groups = request.form.getlist('device_groups')
+                # グループに属するデバイスを取得
+                selected_devices = []
+                for group in selected_groups:
                     for device_name, device in devices.items():
-                        if device.get('group') == selected_group:
+                        if device.get('group') == group:
                             selected_devices.append(device_name)
-                    devices_list = selected_devices
-                else:
-                    devices_list = []
+                devices_list = selected_devices
             else:
                 # 個別デバイス選択の場合
-                selected_device = request.form.get('individual_device')
-                if selected_device:
-                    devices_list = [selected_device]
-                else:
-                    devices_list = []
+                selected_devices = request.form.getlist('individual_devices')
+                devices_list = selected_devices
             
             scenarios[scenario_name] = {
                 'devices': devices_list,
