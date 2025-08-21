@@ -31,26 +31,34 @@
             
             <!-- Individual devices selection -->
             <div id="individual_devices">
-                <select class="form-select" id="devices" name="devices" multiple size="8">
+                <div class="row">
                     {% for device_name, device in devices.items() %}
-                    <option value="{{ device_name }}" {% if device_name in scenario.devices %}selected{% endif %}>
-                        {{ device_name }} ({{ device.group }})
-                    </option>
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="individual_device" id="device_{{ device_name }}" value="{{ device_name }}" {% if device_name in scenario.devices %}checked{% endif %}>
+                            <label class="form-check-label" for="device_{{ device_name }}">
+                                {{ device_name }} ({{ device.group }})
+                            </label>
+                        </div>
+                    </div>
                     {% endfor %}
-                </select>
-                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple devices</small>
+                </div>
             </div>
             
             <!-- Device groups selection -->
             <div id="device_groups" style="display: none;">
-                <select class="form-select" id="device_groups" name="device_groups" multiple size="8">
+                <div class="row">
                     {% for group in device_groups|unique %}
-                    <option value="{{ group }}" {% if group in scenario.device_groups|default([]) %}selected{% endif %}>
-                        {{ group }}
-                    </option>
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="device_group" id="group_{{ group }}" value="{{ group }}" {% if group in scenario.device_groups|default([]) %}checked{% endif %}>
+                            <label class="form-check-label" for="group_{{ group }}">
+                                {{ group }}
+                            </label>
+                        </div>
+                    </div>
                     {% endfor %}
-                </select>
-                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple groups</small>
+                </div>
             </div>
         </div>
         <div class="form-group">
