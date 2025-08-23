@@ -1,84 +1,58 @@
 
 
-# コーディングスタイルガイドライン
+# コーディングスタイルと規約: cisco-config-fetcher
+
+## インデントとフォーマット
+- インデント: 4つのスペース
+- 行の長さ: 79文字以内 (flake8のE501ルールに従う)
+- ファイルエンコーディング: UTF-8
 
 ## 命名規則
-- **変数/関数**: スネークケース (`snake_case`)
-- **クラス**: キャメルケース (`CamelCase`)
-- **定数**: 大文字スネークケース (`UPPER_SNAKE_CASE`)
-- **プライベートメンバ**: 接頭辞にアンダースコア (`_private_var`)
+- クラス名: キャメルケース (例: NetworkDeviceExecutor)
+- メソッドと変数名: スネークケース (例: execute_commands, device_type)
+- 定数: オールキャップス (例: DEFAULT_TIMEOUT)
 
-## ドキュメンテーション
-```python
-def connect_to_device(device_config):
-    """
-    Ciscoデバイスに接続する
-    
-    Args:
-        device_config (dict): デバイス設定情報
-            - host: ホスト名/IP
-            - device_type: デバイスタイプ
-            - username: ユーザー名
-            - password: パスワード
-            - secret: 特権モードパスワード
-    
-    Returns:
-        netmiko.ConnectHandler: 接続オブジェクト
-    
-    Raises:
-        NetMikoAuthenticationException: 認証エラー
-        NetMikoTimeoutException: 接続タイムアウト
-    """
-    # 実装コード
-```
-
-## 型ヒント
-```python
-from typing import Dict, List, Optional
-
-def send_commands(
-    connection: netmiko.BaseConnection,
-    commands: List[str],
-    config_mode: bool = False
-) -> Dict[str, str]:
-    """
-    コマンドを実行し結果を返す
-    """
-```
-
-## コード構造
-1. インポートは標準ライブラリ→サードパーティ→ローカルモジュールの順
-2. クラスメソッドの順序:
-   - `__init__`
-   - `@property`
-   - `@classmethod`
-   - その他メソッド（公開→非公開）
-3. 1関数あたり最大50行
+## コメントとドキュメンテーション
+- コメント: 主に日本語を使用
+- ドキュストリング: Googleスタイルのdocstring
+- ロギングメッセージ: 英語で記述
 
 ## エラーハンドリング
-```python
-try:
-    output = connection.send_command(command)
-except (NetMikoTimeoutException, NetMikoAuthenticationException) as e:
-    logger.error(f"デバイス接続エラー: {device['host']} - {str(e)}")
-    return None
-finally:
-    if connection:
-        connection.disconnect()
-```
+- 例外処理: try-exceptブロックを使用して適切にキャッチ
+- ロギング: loggingモジュールを使用してエラーを記録
+- リソース解放: finallyブロックまたは適切な切断処理で確実に解放
 
-## ロギング
-```python
-import logging
+## 非同期処理
+- asyncioを使用してasync/await構文を実装
+- 非同期関数はasync defで定義
+- awaitはtelnetlib3のclose()メソッドなど、適切な場所で使用
+- イベントループ管理: get_event_loop()を使用し、既存のループが実行中でないか確認
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+## インポートの規約
+- インポートはアルファベット順に整理
+- 標準ライブラリ → サードパーティ → ローカルプロジェクトの順にインポート
+- isortを使用してインポートを自動整理
 
-# ファイルハンドラ設定
-file_handler = logging.FileHandler('app.log')
-file_handler.setFormatter(logging.Formatter(
-    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-))
-logger.addHandler(file_handler)
-```
+## テストの規約 (今後の実装)
+- pytestを使用
+- テストファイルはtests/ディレクトリに格納
+- テストメソッドはtest_で始まる名前
+- テストの実装はAAAスタイル (Arrange, Act, Assert)
+
+## コードの可読性
+- 変数名は意味のある名前を使用
+- 長すぎる1行は複数行に分割
+- 適切な空行を挿入してコードを視覚的に整理
+- 関数やメソッドは単一責任原則に従う
+
+## ロギングの規約
+- loggerのインスタンス名: logger
+- ロギングレベル: INFO以上を標準出力に表示
+- ロギングメッセージは英語で統一
+- ロギングのフォーマット: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+## テンプレートと設定
+- YAMLファイル: インデントは2つのスペース
+- HTMLテンプレート: Jinja2の規約に従う
+- 設定ファイルはconfig_manager.pyを通じて読み込み
 

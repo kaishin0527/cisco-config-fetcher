@@ -1,0 +1,533 @@
+
+{% extends "base.html" %}
+
+{% block title %}ログ閲覧{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">
+                <i class="fas fa-file-alt me-2"></i>ログ閲覧
+            </h1>
+        </div>
+    </div>
+
+    <!-- エラーメッセージ -->
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+    </div>
+    {% endif %}
+
+    <!-- ログサマリー -->
+    {% if summary %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ summary.total_sessions }}</h4>
+                            <p class="mb-0">総セッション数</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ summary.successful_sessions }}</h4>
+                            <p class="mb-0">成功セッション</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ summary.failed_sessions }}</h4>
+                            <p class="mb-0">失敗セッション</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-times-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ summary.device_count }}</h4>
+                            <p class="mb-0">デバイス数</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-server fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- デバイス別統計 -->
+    {% if device_stats %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-server me-2"></i>デバイス別統計
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for device_name, stats in device_stats.items() %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ device_name }}</h6>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <h5 class="text-primary">{{ stats.total_logs }}</h5>
+                                    <small class="text-muted">総ログ数</small>
+                                </div>
+                                <div class="col-4">
+                                    <h5 class="text-success">{{ "%.1f"|format(stats.success_rate) }}%</h5>
+                                    <small class="text-muted">成功率</small>
+                                </div>
+                                <div class="col-4">
+                                    <h5 class="text-info">{{ stats.latest_timestamp[:10] }}</h5>
+                                    <small class="text-muted">最終実行</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 検索フォーム -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-search me-2"></i>ログ検索
+            </h5>
+        </div>
+        <div class="card-body">
+            <form id="searchForm" class="row g-3">
+                <div class="col-md-3">
+                    <label for="deviceFilter" class="form-label">デバイス</label>
+                    <select class="form-select" id="deviceFilter" name="device">
+                        <option value="">すべて</option>
+                        {% for device_name in summary.devices.keys() if summary.devices %}
+                        <option value="{{ device_name }}">{{ device_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="commandFilter" class="form-label">コマンド</label>
+                    <input type="text" class="form-control" id="commandFilter" name="command" placeholder="コマンドを入力">
+                </div>
+                <div class="col-md-2">
+                    <label for="startDate" class="form-label">開始日</label>
+                    <input type="date" class="form-control" id="startDate" name="start_date">
+                </div>
+                <div class="col-md-2">
+                    <label for="endDate" class="form-label">終了日</label>
+                    <input type="date" class="form-control" id="endDate" name="end_date">
+                </div>
+                <div class="col-md-2">
+                    <label for="limit" class="form-label">表示件数</label>
+                    <select class="form-select" id="limit" name="limit">
+                        <option value="10">10件</option>
+                        <option value="50" selected>50件</option>
+                        <option value="100">100件</option>
+                        <option value="200">200件</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>検索
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                        <i class="fas fa-undo me-2"></i>リセット
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ログクリアフォーム -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-trash-alt me-2"></i>ログクリア
+            </h5>
+        </div>
+        <div class="card-body">
+            <form id="clearForm" class="row g-3">
+                <div class="col-md-4">
+                    <label for="clearDevice" class="form-label">デバイス（指定しない場合はすべて）</label>
+                    <select class="form-select" id="clearDevice" name="device">
+                        <option value="">すべて</option>
+                        {% for device_name in summary.devices.keys() if summary.devices %}
+                        <option value="{{ device_name }}">{{ device_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="olderThanDays" class="form-label">日数（指定しない場合はすべて）</label>
+                    <input type="number" class="form-control" id="olderThanDays" name="older_than_days" placeholder="例: 30">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>ログをクリア
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ログ一覧 -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>ログ一覧
+            </h5>
+            <div>
+                <button class="btn btn-sm btn-outline-primary" onclick="exportLogs()">
+                    <i class="fas fa-download me-1"></i>エクスポート
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="logsTable">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">読み込み中...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ログ詳細モーダル -->
+<div class="modal fade" id="logDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ログ詳細</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="logDetailContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ログデータを取得
+let currentLogs = [];
+let currentFilters = {};
+
+function loadLogs(filters = {}) {
+    currentFilters = filters;
+    
+    const params = new URLSearchParams({
+        device: filters.device || '',
+        command: filters.command || '',
+        start_date: filters.start_date || '',
+        end_date: filters.end_date || '',
+        limit: filters.limit || 50
+    });
+    
+    fetch(`/api/logs?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentLogs = data.logs;
+                displayLogs(data.logs);
+            } else {
+                showError('ログの読み込みに失敗しました: ' + data.error);
+            }
+        })
+        .catch(error => {
+            showError('エラーが発生しました: ' + error.message);
+        });
+}
+
+function displayLogs(logs) {
+    const container = document.getElementById('logsTable');
+    
+    if (logs.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p class="text-muted">ログが見つかりません</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>日時</th>
+                        <th>デバイス</th>
+                        <th>コマンド</th>
+                        <th>状態</th>
+                        <th>実行時間</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    logs.forEach(log => {
+        const timestamp = log.timestamp ? new Date(log.timestamp).toLocaleString('ja-JP') : 'N/A';
+        const deviceName = log.device_name || 'N/A';
+        const command = log.command || 'N/A';
+        const success = log.success || false;
+        const executionTime = log.execution_time ? log.execution_time.toFixed(2) + 's' : 'N/A';
+        
+        html += `
+            <tr>
+                <td><small>${timestamp}</small></td>
+                <td><span class="badge bg-secondary">${deviceName}</span></td>
+                <td>
+                    <code class="small">${escapeHtml(command.substring(0, 50))}${command.length > 50 ? '...' : ''}</code>
+                </td>
+                <td>
+                    ${success ? 
+                        '<span class="badge bg-success">成功</span>' : 
+                        '<span class="badge bg-danger">失敗</span>'
+                    }
+                </td>
+                <td><small>${executionTime}</small></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="showLogDetail('${log.session_id}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-3">
+            <small class="text-muted">合計 ${logs.length} 件のログsmall>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+function showLogDetail(sessionId) {
+    const log = currentLogs.find(l => l.session_id === sessionId);
+    if (!log) return;
+    
+    const content = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>基本情報</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td>セッションID</td>
+                        <td><code>${log.session_id}</code></td>
+                    </tr>
+                    <tr>
+                        <td>日時</td>
+                        <td>${log.timestamp ? new Date(log.timestamp).toLocaleString('ja-JP') : 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td>デバイス</td>
+                        <td>${log.device_name || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td>コマンド</td>
+                        <td><code>${escapeHtml(log.command || 'N/A')}</code></td>
+                    </tr>
+                    <tr>
+                        <td>状態</td>
+                        <td>${log.success ? 
+                            '<span class="badge bg-success">成功</span>' : 
+                            '<span class="badge bg-danger">失敗</span>'
+                        }</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>実行情報</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td>実行時間</td>
+                        <td>${log.execution_time ? log.execution_time.toFixed(3) + '秒' : 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td>コマンドタイプ</td>
+                        <td>${log.command_type || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td>シナリオ名</td>
+                        <td>${log.scenario_name || 'N/A'}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <hr>
+        
+        <h6>実行結果</h6>
+        <div class="mb-3">
+            <label class="form-label">出力</label>
+            <pre class="form-control bg-light p-3" style="max-height: 300px; overflow-y: auto;">${escapeHtml(log.output || '')}</pre>
+        </div>
+        
+        ${log.error_output ? `
+        <div class="mb-3">
+            <label class="form-label">エラー出力</label>
+            <pre class="form-control bg-danger bg-opacity-10 p-3" style="max-height: 200px; overflow-y: auto;">${escapeHtml(log.error_output || '')}</pre>
+        </div>
+        ` : ''}
+        
+        ${log.command_results ? `
+        <div>
+            <label class="form-label">コマンド別結果</label>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>コマンド</th>
+                            <th>状態</th>
+                            <th>実行時間</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${log.command_results.map(cmd => `
+                            <tr>
+                                <td><code class="small">${escapeHtml(cmd.command || '')}</code></td>
+                                <td>${cmd.success ? 
+                                    '<span class="badge bg-success">成功</span>' : 
+                                    '<span class="badge bg-danger">失敗</span>'
+                                }</td>
+                                <td>${cmd.execution_time ? cmd.execution_time.toFixed(3) + '秒' : 'N/A'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        ` : ''}
+    `;
+    
+    document.getElementById('logDetailContent').innerHTML = content;
+    new bootstrap.Modal(document.getElementById('logDetailModal')).show();
+}
+
+function exportLogs() {
+    const params = new URLSearchParams(currentFilters);
+    window.open(`/api/logs?${params}&export=true`, '_blank');
+}
+
+function resetForm() {
+    document.getElementById('searchForm').reset();
+    loadLogs({});
+}
+
+function showError(message) {
+    const container = document.getElementById('logsTable');
+    container.innerHTML = `
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>${message}
+        </div>
+    `;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// イベントリスナー
+document.addEventListener('DOMContentLoaded', function() {
+    // 検索フォーム
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const filters = {
+            device: formData.get('device'),
+            command: formData.get('command'),
+            start_date: formData.get('start_date'),
+            end_date: formData.get('end_date'),
+            limit: parseInt(formData.get('limit'))
+        };
+        loadLogs(filters);
+    });
+    
+    // ログクリアフォーム
+    document.getElementById('clearForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!confirm('本当にログをクリアしますか？この操作は元に戻せません。')) {
+            return;
+        }
+        
+        const formData = new FormData(this);
+        fetch('/clear_logs', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('ログをクリアしました');
+                loadLogs(currentFilters);
+            } else {
+                alert('ログクリアに失敗しました: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('エラーが発生しました: ' + error.message);
+        });
+    });
+    
+    // 初期読み込み
+    loadLogs();
+});
+</script>
+{% endblock %}

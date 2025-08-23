@@ -51,6 +51,37 @@
     </div>
 </div>
 
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>デバイス接続テスト</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">デバイスを選択</label>
+                    <select id="device-select" class="form-select">
+                        <option value="">デバイスを選択してください</option>
+                        {% for device_name in devices.keys() %}
+                        <option value="{{ device_name }}">{{ device_name }} ({{ devices[device_name].host }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button id="test-connection-btn" class="btn btn-outline-primary" disabled>
+                    <i class="bi bi-wifi"></i> 接続テスト
+                </button>
+                <div id="connection-test-result" class="mt-3"></div>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-info">
+                    <h6>接続テストについて</h6>
+                    <p class="mb-0">実行前にデバイスへの接続を確認できます。テストが成功した場合のみシナリオを実行してください。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% if results %}
 <div class="mt-4">
     <h3>実行結果</h3>
@@ -63,6 +94,87 @@
     </div>
 </div>
 {% endif %}
+{% endblock %}
+
+<script>
+// デバイス選択の変更イベント
+document.getElementById('device-select').addEventListener('change', function() {
+    const deviceSelect = this;
+    const testButton = document.getElementById('test-connection-btn');
+    
+    if (deviceSelect.value) {
+        testButton.disabled = false;
+        testButton.innerHTML = '<i class="bi bi-wifi"></i> 接続テスト';
+    } else {
+        testButton.disabled = true;
+        testButton.innerHTML = '<i class="bi bi-wifi"></i> 接続テスト';
+    }
+    
+    // 結果表示エリアをクリア
+    document.getElementById('connection-test-result').innerHTML = '';
+});
+
+// 接続テストボタンのクリックイベント
+document.getElementById('test-connection-btn').addEventListener('click', function() {
+    const deviceSelect = document.getElementById('device-select');
+    const testButton = this;
+    const resultDiv = document.getElementById('connection-test-result');
+    
+    if (!deviceSelect.value) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">デバイスを選択してください</div>';
+        return;
+    }
+    
+    // ボタンを無効化
+    testButton.disabled = true;
+    testButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> テスト中...';
+    
+    // 結果表示エリアをクリア
+    resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> テスト中...</div>';
+    
+    // 接続テストAPIを呼び出し
+    fetch('/test_device_connection', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `device_name=${encodeURIComponent(deviceSelect.value)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        // ボタンを有効化
+        testButton.disabled = false;
+        testButton.innerHTML = '<i class="bi bi-wifi"></i> 接続テスト';
+        
+        // 結果を表示
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i> ${data.message}
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle"></i> ${data.message}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        // ボタンを有効化
+        testButton.disabled = false;
+        testButton.innerHTML = '<i class="bi bi-wifi"></i> 接続テスト';
+        
+        // エラーを表示
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle"></i> テスト実行中にエラーが発生しました: ${error.message}
+            </div>
+        `;
+    });
+});
+</script>
 {% endblock %}
 
 
