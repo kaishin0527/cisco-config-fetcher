@@ -1,0 +1,141 @@
+
+
+
+
+{% extends "base.html" %}
+
+{% block title %}実行ログ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>実行ログ</h2>
+        <div>
+            <a href="{{ url_for('show_results') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> 戻る
+            </a>
+            <a href="{{ url_for('download_file', filename=filename) }}" 
+               class="btn btn-primary">
+                <i class="bi bi-download"></i> ダウンロード
+            </a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">ログファイル: {{ filename }}</h5>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="copyLog()">
+                    <i class="bi bi-clipboard"></i> コピー
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="downloadLog()">
+                    <i class="bi bi-download"></i> ダウンロード
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="log-container">
+                <pre id="log-content" class="log-content">{{ log_content }}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.log-container {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.log-content {
+    margin: 0;
+    padding: 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* ログのハイライト */
+.log-content .success {
+    color: #198754;
+    font-weight: bold;
+}
+
+.log-content .error {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.log-content .warning {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.log-content .info {
+    color: #0d6efd;
+    font-weight: bold;
+}
+
+/* スクロールバーのスタイル */
+.log-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.log-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+</style>
+
+<script>
+function copyLog() {
+    const logContent = document.getElementById('log-content').textContent;
+    navigator.clipboard.writeText(logContent).then(function() {
+        alert('ログをクリップボードにコピーしました');
+    }).catch(function(err) {
+        console.error('コピーに失敗しました:', err);
+        alert('コピーに失敗しました');
+    });
+}
+
+function downloadLog() {
+    const logContent = document.getElementById('log-content').textContent;
+    const blob = new Blob([logContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// ログの自動スクロール（必要に応じて）
+function scrollToBottom() {
+    const logContainer = document.querySelector('.log-container');
+    logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+// ページ読み込み時にスクロール
+window.addEventListener('load', scrollToBottom);
+</script>
+{% endblock %}
+
+
+

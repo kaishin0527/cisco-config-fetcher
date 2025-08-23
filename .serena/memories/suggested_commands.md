@@ -1,72 +1,82 @@
 
 
-# プロジェクト操作コマンド集
+# cisco-config-fetcher でよく使うコマンド
 
-## 開発環境セットアップ
+## 開発コマンド
 ```bash
-# 依存パッケージのインストール
-pip install flask pyyaml netmiko
+# アプリケーションの起動
+python3 app.py
 
-# 環境変数の設定（必要に応じて）
-export FLASK_APP=web_app_complete.py
+# コードの静的解析
+python3 -m flake8
+
+# コードの自動整形
+python3 -m black .
+python3 -m isort .
+
+# テストの実行 (テストが実装された後)
+python3 -m pytest
+
+# 依存関係のインストール
+pip3 install -r requirements.txt
 ```
 
-## アプリケーション実行
+## ネットワーク接続テスト
 ```bash
-# Webインターフェース起動
-python web_app_complete.py
+# SSH接続のテスト
+python3 -c "from network_executor import NetworkDeviceExecutor; \
+    executor = NetworkDeviceExecutor('device_name', 'ssh', 'hostname', 'username', 'password'); \
+    executor.connect(); \
+    print(executor.execute_commands(['show version'])); \
+    executor.disconnect()"
 
-# バッチスクリプト実行（シナリオ処理）
-python cisco_config_fetcher_parallel.py scenario_parallel.yaml
+# Telnet接続のテスト
+python3 -c "from network_executor import NetworkDeviceExecutor; \
+    executor = NetworkDeviceExecutor('device_name', 'telnet', 'hostname', 'username', 'password'); \
+    executor.connect(); \
+    print(executor.execute_commands(['show version'])); \
+    executor.disconnect()"
 ```
 
-## テスト関連
+## デバッグコマンド
 ```bash
-# 単体テスト実行（テスト作成後）
-pytest test_*.py
+# ロギングレベルの変更
+export LOG_LEVEL=DEBUG
+python3 app.py
 
-# カバレッジ計測
-coverage run -m pytest
-coverage report
+# ネットワークパケットのキャプチャ
+tcpdump -i any port 23 -w telnet_capture.pcap
+
+# コードカバレッジの確認
+python3 -m pytest --cov=network_executor.py
 ```
 
-## コード品質管理
+## バージョン管理コマンド
 ```bash
-# コードフォーマット
-black *.py
-
-# 静的解析
-pylint *.py
-```
-
-## バージョン管理
-```bash
-# 変更ステータス確認
+# 現在の変更の確認
 git status
 
-# 変更をコミット
+# 変更のコミット
 git add .
-git commit -m "メッセージ"
+git commit --author="openhands <openhands@all-hands.dev>" -m "Telnet接続の非同期切断処理を改善"
 
-# リモートリポジトリにプッシュ
-git push origin main
+# ブランチの作成と切り替え
+git checkout -b feature/telnet-async
+git push origin feature/telnet-async
+
+# プルリクエストの作成
+gh pr create --title \"Telnet非同期切断の実装\" --body \"Telnet接続の切断処理を非同期に対応させました。\n- network_executor.pyのdisconnect()メソッドを修正\n- telnetlib3の非同期close()をawaitで適切に処理\n- イベントループ管理を最適化\n- 日本語コメントの修正\" --head feature/telnet-async
 ```
 
-## デバッグ
+## テストの実装計画
 ```bash
-# 実行ログの監視
-tail -f server.log
+# テスト環境のセットアップ
+python3 -m pytest --setup-only -q
 
-# ポート使用状況確認
-lsof -i :51361
-```
+# テストの実行 (今後の実装)
+python3 -m pytest tests/network_executor_test.py
 
-## 設定ファイル操作
-```bash
-# デバイス設定の検証
-yamllint devices_updated.yaml
-
-# シナリオファイルのプレビュー
-cat scenario_parallel.yaml
+# テストカバレッジの実行 (今後の実装)
+python3 -m pytest --cov=network_executor.py --cov-report=term-missing
 ```
 

@@ -4,11 +4,18 @@ import yaml
 import os
 import subprocess
 import threading
+import json
 from datetime import datetime
 import io
 
 # 設定管理モジュールのインポート
 from config_manager import config_manager, get_devices, get_command_groups, get_scenarios
+
+# ネットワーク実行モジュールのインポート
+from network_executor import NetworkDeviceExecutor, execute_scenario_on_device, test_device_connection
+
+# ログ管理モジュールのインポート
+from logger_manager import get_log_manager
 
 def validate_all_configs():
     """すべての設定ファイルをバリデーション"""
@@ -42,6 +49,33 @@ def validate_all_configs():
             break
     
     return results
+
+def execute_scenario_on_device(device_name: str, scenario_name: str):
+    """
+    デバイスでシナリオを実行
+    
+    Args:
+        device_name: デバイス名
+        scenario_name: シナリオ名
+        
+    Returns:
+        実行結果
+    """
+    devices = get_devices()
+    scenarios = get_scenarios()
+    command_groups = get_command_groups()
+    
+    if device_name not in devices:
+        return {'success': False, 'error': f'Device {device_name} not found'}
+    
+    if scenario_name not in scenarios:
+        return {'success': False, 'error': f'Scenario {scenario_name} not found'}
+    
+    device_config = devices[device_name]
+    scenario_config = scenarios[scenario_name]
+    
+    executor = NetworkDeviceExecutor(device_config)
+    return executor.execute_scenario(scenario_config, command_groups)
 
 def get_config_summary():
     """設定のサマリーを取得"""
@@ -557,30 +591,105 @@ def _execute_scenario_logic(scenario_name):
     # 非同期で実行
     def execute_scenario():
         try:
-            # ここで実際の実行処理を行う
-            # 現在はダミーの実行結果を生成
+            # デバイスとコマンドグループを取得
+            devices = get_devices()
+            command_groups = get_command_groups()
+            
+            # 実行結果を保存するディレクトリを作成
+            result_dir = os.path.join('results', datetime.now().strftime('%Y%m%d'))
+            os.makedirs(result_dir, exist_ok=True)
+            
+            # 各デバイスでシナリオを実行
+            scenario_results = []
+            total_devices = len(scenario['devices'])
+            successful_devices = 0
+            failed_devices = 0
+            
+            for device_name in scenario['devices']:
+                if device_name in devices:
+                    device_config = devices[device_name]
+                    
+                    # シナリオを実行
+                    device_result = execute_scenario_on_device(
+                        device_config, 
+                        command_groups, 
+                        scenario
+                    )
+                    
+                    scenario_results.append(device_result)
+                    
+                    if device_result['success']:
+                        successful_devices += 1
+                    else:
+                        failed_devices += 1
+                else:
+                    # デバイスが存在しない場合
+                    scenario_results.append({
+                        'device_name': device_name,
+                        'device_host': 'unknown',
+                        'success': False,
+                        'start_time': datetime.now().isoformat(),
+                        'end_time': datetime.now().isoformat(),
+                        'total_commands': 0,
+                        'successful_commands': 0,
+                        'failed_commands': 0,
+                        'error_message': f'Device {device_name} not found'
+                    })
+                    failed_devices += 1
+            
+            # 全体の結果を作成
+            overall_success = failed_devices == 0
             result = {
                 'scenario_name': scenario_name,
                 'devices': scenario['devices'],
                 'commands': scenario['commands'],
-                'status': 'success',
-                'output': f'シナリオ "{scenario_name}" を実行しました',
-                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                'status': 'success' if overall_success else 'partial_success',
+                'total_devices': total_devices,
+                'successful_devices': successful_devices,
+                'failed_devices': failed_devices,
+                'device_results': scenario_results,
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'execution_summary': f'{successful_devices}/{total_devices} デバイスで成功'
             }
             
             # 結果を保存
-            result_dir = os.path.join('results', datetime.now().strftime('%Y%m%d'))
-            os.makedirs(result_dir, exist_ok=True)
             result_file = os.path.join(result_dir, f'{scenario_name}_{datetime.now().strftime("%H%M%S")}.yaml')
-            
             with open(result_file, 'w', encoding='utf-8') as f:
                 yaml.dump(result, f, default_flow_style=False, allow_unicode=True)
                 
+            # 実行ログを保存
+            log_file = os.path.join(result_dir, f'{scenario_name}_{datetime.now().strftime("%H%M%S")}.log')
+            with open(log_file, 'w', encoding='utf-8') as f:
+                f.write(f"シナリオ実行結果: {scenario_name}\n")
+                f.write(f"実行時刻: {result['timestamp']}\n")
+                f.write(f"全体の状態: {result['status']}\n")
+                f.write(f"デバイス結果: {successful_devices}/{total_devices} 成功\n")
+                f.write("=" * 50 + "\n\n")
+                
+                for device_result in scenario_results:
+                    f.write(f"デバイス: {device_result['device_name']} ({device_result['device_host']})\n")
+                    f.write(f"状態: {'成功' if device_result['success'] else '失敗'}\n")
+                    f.write(f"実行コマンド数: {device_result['total_commands']}\n")
+                    f.write(f"成功コマンド数: {device_result['successful_commands']}\n")
+                    f.write(f"失敗コマンド数: {device_result['failed_commands']}\n")
+                    if device_result['error_message']:
+                        f.write(f"エラーメッセージ: {device_result['error_message']}\n")
+                    f.write("-" * 30 + "\n")
+                    
         except Exception as e:
             print(f"シナリオ実行エラー: {e}")
+            # エラーログを保存
+            error_dir = os.path.join('results', 'errors')
+            os.makedirs(error_dir, exist_ok=True)
+            error_file = os.path.join(error_dir, f'{scenario_name}_{datetime.now().strftime("%H%M%S")}.log')
+            with open(error_file, 'w', encoding='utf-8') as f:
+                f.write(f"シナリオ実行エラー: {scenario_name}\n")
+                f.write(f"エラー時刻: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"エラー内容: {str(e)}\n")
     
     # 別スレッドで実行
     thread = threading.Thread(target=execute_scenario)
+    thread.daemon = True
     thread.start()
     
     flash(f'シナリオ "{scenario_name}" を実行中です...', 'info')
@@ -596,45 +705,7 @@ def run_scenario():
 @app.route('/execute_scenario/<scenario_name>', methods=['GET'])
 def execute_scenario(scenario_name):
     """シナリオを実行（GET用）"""
-    scenarios = get_scenarios()
-    
-    if scenario_name not in scenarios:
-        flash('シナリオが見つかりません', 'danger')
-        return redirect(url_for('execute'))
-    
-    scenario = scenarios[scenario_name]
-    
-    # 非同期で実行
-    def execute_scenario():
-        try:
-            # ここで実際の実行処理を行う
-            # 現在はダミーの実行結果を生成
-            result = {
-                'scenario_name': scenario_name,
-                'devices': scenario['devices'],
-                'commands': scenario['commands'],
-                'status': 'success',
-                'output': f'シナリオ "{scenario_name}" を実行しました',
-                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            }
-            
-            # 結果を保存
-            result_dir = os.path.join('results', datetime.now().strftime('%Y%m%d'))
-            os.makedirs(result_dir, exist_ok=True)
-            result_file = os.path.join(result_dir, f'{scenario_name}_{datetime.now().strftime("%H%M%S")}.yaml')
-            
-            with open(result_file, 'w', encoding='utf-8') as f:
-                yaml.dump(result, f, default_flow_style=False, allow_unicode=True)
-                
-        except Exception as e:
-            print(f"シナリオ実行エラー: {e}")
-    
-    # 別スレッドで実行
-    thread = threading.Thread(target=execute_scenario)
-    thread.start()
-    
-    flash(f'シナリオ "{scenario_name}" を実行中です...', 'info')
-    return redirect(url_for('execute'))
+    return _execute_scenario_logic(scenario_name)
 
 @app.route('/execute_scenario_post', methods=['GET', 'POST'])
 def execute_scenario_post():
@@ -657,16 +728,102 @@ def execute_scenario_post():
                     # 非同期で実行
                     def execute_scenario_list():
                         try:
-                            for scenario_name in scenarios_to_run:
-                                run_scenario(scenario_name)
+                            # 並列でシナリオを実行
+                            from concurrent.futures import ThreadPoolExecutor, as_completed
+                            
+                            # 結果を保存するディレクトリを作成
+                            result_dir = os.path.join('results', datetime.now().strftime('%Y%m%d'))
+                            os.makedirs(result_dir, exist_ok=True)
+                            
+                            # 各シナリオの実行結果を保存
+                            list_results = []
+                            total_scenarios = len(scenarios_to_run)
+                            successful_scenarios = 0
+                            failed_scenarios = 0
+                            
+                            # ThreadPoolExecutorで並列実行
+                            with ThreadPoolExecutor(max_workers=min(5, total_scenarios)) as executor:
+                                # 各シナリオの実行をサミット
+                                future_to_scenario = {}
+                                for scenario_name in scenarios_to_run:
+                                    future = executor.submit(_execute_single_scenario_for_list, scenario_name)
+                                    future_to_scenario[future] = scenario_name
+                                
+                                # 実行結果を収集
+                                for future in as_completed(future_to_scenario):
+                                    scenario_name = future_to_scenario[future]
+                                    try:
+                                        scenario_result = future.result()
+                                        list_results.append(scenario_result)
+                                        
+                                        if scenario_result['success']:
+                                            successful_scenarios += 1
+                                        else:
+                                            failed_scenarios += 1
+                                            
+                                    except Exception as e:
+                                        # シナリオ実行が失敗した場合
+                                        list_results.append({
+                                            'scenario_name': scenario_name,
+                                            'success': False,
+                                            'error_message': str(e),
+                                            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                        })
+                                        failed_scenarios += 1
+                            
+                            # シナリオリスト全体の結果を作成
+                            overall_success = failed_scenarios == 0
+                            list_result = {
+                                'scenario_list_name': scenario_name,
+                                'scenarios': scenarios_to_run,
+                                'status': 'success' if overall_success else 'partial_success',
+                                'total_scenarios': total_scenarios,
+                                'successful_scenarios': successful_scenarios,
+                                'failed_scenarios': failed_scenarios,
+                                'scenario_results': list_results,
+                                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                'execution_summary': f'{successful_scenarios}/{total_scenarios} シナリオで成功'
+                            }
+                            
+                            # 結果を保存
+                            result_file = os.path.join(result_dir, f'scenario_list_{scenario_name}_{datetime.now().strftime("%H%M%S")}.yaml')
+                            with open(result_file, 'w', encoding='utf-8') as f:
+                                yaml.dump(list_result, f, default_flow_style=False, allow_unicode=True)
+                            
+                            # 実行ログを保存
+                            log_file = os.path.join(result_dir, f'scenario_list_{scenario_name}_{datetime.now().strftime("%H%M%S")}.log')
+                            with open(log_file, 'w', encoding='utf-8') as f:
+                                f.write(f"シナリオリスト実行結果: {scenario_name}\n")
+                                f.write(f"実行時刻: {list_result['timestamp']}\n")
+                                f.write(f"全体の状態: {list_result['status']}\n")
+                                f.write(f"シナリオ結果: {successful_scenarios}/{total_scenarios} 成功\n")
+                                f.write("=" * 50 + "\n\n")
+                                
+                                for scenario_result in list_results:
+                                    f.write(f"シナリオ: {scenario_result['scenario_name']}\n")
+                                    f.write(f"状態: {'成功' if scenario_result['success'] else '失敗'}\n")
+                                    if scenario_result.get('execution_summary'):
+                                        f.write(f"実行サマリー: {scenario_result['execution_summary']}\n")
+                                    if scenario_result.get('error_message'):
+                                        f.write(f"エラーメッセージ: {scenario_result['error_message']}\n")
+                                    f.write("-" * 30 + "\n")
+                                    
                         except Exception as e:
                             print(f"シナリオリスト実行エラー: {e}")
+                            # エラーログを保存
+                            error_dir = os.path.join('results', 'errors')
+                            os.makedirs(error_dir, exist_ok=True)
+                            error_file = os.path.join(error_dir, f'scenario_list_{scenario_name}_{datetime.now().strftime("%H%M%S")}.log')
+                            with open(error_file, 'w', encoding='utf-8') as f:
+                                f.write(f"シナリオリスト実行エラー: {scenario_name}\n")
+                                f.write(f"エラー時刻: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                                f.write(f"エラー内容: {str(e)}\n")
                     
                     thread = threading.Thread(target=execute_scenario_list)
                     thread.daemon = True
                     thread.start()
                     
-                    flash(f'シナリオリスト "{scenario_name}" 内の {len(scenarios_to_run)} 件のシナリオを実行中です...', 'info')
+                    flash(f'シナリオリスト "{scenario_name}" 内の {len(scenarios_to_run)} 件のシナリオを並列実行中です...', 'info')
                     return redirect(url_for('scenario_lists'))
     
     except Exception as e:
@@ -674,6 +831,98 @@ def execute_scenario_post():
     
     # シナリオリストが存在しない場合は通常のシナリオ実行
     return _execute_scenario_logic(scenario_name)
+
+def _execute_single_scenario_for_list(scenario_name):
+    """シナリオリスト用の単一シナリオ実行（並列実行用）"""
+    scenarios = get_scenarios()
+    
+    if scenario_name not in scenarios:
+        return {
+            'scenario_name': scenario_name,
+            'success': False,
+            'error_message': f'Scenario {scenario_name} not found',
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+    
+    scenario = scenarios[scenario_name]
+    
+    try:
+        # デバイスとコマンドグループを取得
+        devices = get_devices()
+        command_groups = get_command_groups()
+        
+        # 実行結果を保存するディレクトリを作成
+        result_dir = os.path.join('results', datetime.now().strftime('%Y%m%d'))
+        os.makedirs(result_dir, exist_ok=True)
+        
+        # 各デバイスでシナリオを実行
+        scenario_results = []
+        total_devices = len(scenario['devices'])
+        successful_devices = 0
+        failed_devices = 0
+        
+        for device_name in scenario['devices']:
+            if device_name in devices:
+                device_config = devices[device_name]
+                
+                # シナリオを実行
+                device_result = execute_scenario_on_device(
+                    device_config, 
+                    command_groups, 
+                    scenario
+                )
+                
+                scenario_results.append(device_result)
+                
+                if device_result['success']:
+                    successful_devices += 1
+                else:
+                    failed_devices += 1
+            else:
+                # デバイスが存在しない場合
+                scenario_results.append({
+                    'device_name': device_name,
+                    'device_host': 'unknown',
+                    'success': False,
+                    'start_time': datetime.now().isoformat(),
+                    'end_time': datetime.now().isoformat(),
+                    'total_commands': 0,
+                    'successful_commands': 0,
+                    'failed_commands': 0,
+                    'error_message': f'Device {device_name} not found'
+                })
+                failed_devices += 1
+        
+        # 全体の結果を作成
+        overall_success = failed_devices == 0
+        result = {
+            'scenario_name': scenario_name,
+            'devices': scenario['devices'],
+            'commands': scenario['commands'],
+            'success': overall_success,
+            'status': 'success' if overall_success else 'partial_success',
+            'total_devices': total_devices,
+            'successful_devices': successful_devices,
+            'failed_devices': failed_devices,
+            'device_results': scenario_results,
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'execution_summary': f'{successful_devices}/{total_devices} デバイスで成功'
+        }
+        
+        # 結果を保存
+        result_file = os.path.join(result_dir, f'{scenario_name}_{datetime.now().strftime("%H%M%S")}.yaml')
+        with open(result_file, 'w', encoding='utf-8') as f:
+            yaml.dump(result, f, default_flow_style=False, allow_unicode=True)
+            
+        return result
+        
+    except Exception as e:
+        return {
+            'scenario_name': scenario_name,
+            'success': False,
+            'error_message': str(e),
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
 
 @app.route('/execute_scenario_list', methods=['GET', 'POST'])
 def execute_scenario_list():
@@ -686,10 +935,262 @@ def execute_scenario_list():
     scenarios = get_scenarios()
     return render_template('scenario_lists.html', scenarios=scenarios)
 
+@app.route('/test_device_connection', methods=['POST'])
+def test_device_connection():
+    """デバイス接続テスト"""
+    device_name = request.form.get('device_name')
+    
+    if not device_name:
+        return jsonify({'success': False, 'message': 'デバイス名が指定されていません'})
+    
+    try:
+        devices = get_devices()
+        
+        if device_name not in devices:
+            return jsonify({'success': False, 'message': f'デバイス "{device_name}" が見つかりません'})
+        
+        device_config = devices[device_name]
+        
+        # 接続テストを実行
+        test_result = test_device_connection(device_config)
+        
+        if test_result['success']:
+            message = f'デバイス "{device_name}" に接続成功（接続時間: {test_result["connection_time"]:.2f}秒）'
+        else:
+            message = f'デバイス "{device_name}" に接続失敗: {test_result["message"]}'
+        
+        return jsonify({
+            'success': test_result['success'],
+            'message': message,
+            'connection_time': test_result.get('connection_time', 0)
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'テスト実行エラー: {str(e)}'})
+
 # ダウンロード機能
 @app.route('/download/<path:filename>')
 def download_file(filename):
     return send_file(filename, as_attachment=True)
+
+# 実行結果表示機能
+@app.route('/results')
+def show_results():
+    """実行結果一覧を表示"""
+    try:
+        results_dir = 'results'
+        if not os.path.exists(results_dir):
+            return render_template('results.html', results=[], error_message='実行結果がありません')
+        
+        # 日付ごとの結果を収集
+        results_by_date = {}
+        
+        for date_dir in os.listdir(results_dir):
+            date_path = os.path.join(results_dir, date_dir)
+            if os.path.isdir(date_path):
+                results_by_date[date_dir] = []
+                
+                for result_file in os.listdir(date_path):
+                    if result_file.endswith('.yaml'):
+                        result_path = os.path.join(date_path, result_file)
+                        try:
+                            with open(result_path, 'r', encoding='utf-8') as f:
+                                result_data = yaml.safe_load(f)
+                                results_by_date[date_dir].append(result_data)
+                        except Exception as e:
+                            print(f"結果ファイルの読み込みエラー: {result_file}, {e}")
+        
+        # 日付でソート（新しい順）
+        sorted_dates = sorted(results_by_date.keys(), reverse=True)
+        
+        return render_template('results.html', 
+                             results_by_date=results_by_date, 
+                             sorted_dates=sorted_dates)
+        
+    except Exception as e:
+        return render_template('results.html', results=[], error_message=f'結果の読み込みエラー: {e}')
+
+@app.route('/result/<path:filename>')
+def show_result(filename):
+    """個別の実行結果を表示"""
+    try:
+        result_path = os.path.join('results', filename)
+        
+        if not os.path.exists(result_path):
+            flash('結果ファイルが見つかりません', 'danger')
+            return redirect(url_for('show_results'))
+        
+        with open(result_path, 'r', encoding='utf-8') as f:
+            result_data = yaml.safe_load(f)
+        
+        return render_template('result_detail.html', result=result_data, filename=filename)
+        
+    except Exception as e:
+        flash(f'結果の読み込みエラー: {e}', 'danger')
+        return redirect(url_for('show_results'))
+
+@app.route('/result_log/<path:filename>')
+def show_result_log(filename):
+    """実行ログを表示"""
+    try:
+        log_path = os.path.join('results', filename)
+        
+        if not os.path.exists(log_path):
+            flash('ログファイルが見つかりません', 'danger')
+            return redirect(url_for('show_results'))
+        
+        with open(log_path, 'r', encoding='utf-8') as f:
+            log_content = f.read()
+        
+        return render_template('result_log.html', log_content=log_content, filename=filename)
+        
+    except Exception as e:
+        flash(f'ログの読み込みエラー: {e}', 'danger')
+        return redirect(url_for('show_results'))
+
+# ログ閲覧機能
+@app.route('/logs')
+def view_logs():
+    """ログ閲覧ページ"""
+    try:
+        log_manager = get_log_manager()
+        summary = log_manager.get_log_summary()
+        
+        # デバイス別ログ統計
+        device_stats = {}
+        for device_name in summary['devices'].keys():
+            device_logs = log_manager.get_device_logs(device_name, limit=1)
+            if device_logs:
+                latest_log = device_logs[0]
+                device_stats[device_name] = {
+                    'total_logs': len(log_manager.get_device_logs(device_name)),
+                    'latest_timestamp': latest_log.get('timestamp', 'N/A'),
+                    'success_rate': sum(1 for log in device_logs if log.get('success')) / len(device_logs) * 100 if device_logs else 0
+                }
+        
+        return render_template('logs.html', summary=summary, device_stats=device_stats)
+        
+    except Exception as e:
+        flash(f'ログの読み込みエラー: {e}', 'danger')
+        return render_template('logs.html', summary={}, device_stats={}, error=str(e))
+
+@app.route('/api/logs')
+def api_logs():
+    """ログAPI - JSON形式でログを返す"""
+    try:
+        log_manager = get_log_manager()
+        
+        # クエリパラメータ取得
+        device = request.args.get('device')
+        command = request.args.get('command')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        limit = int(request.args.get('limit', 50))
+        
+        logs = log_manager.get_logs(device, command, start_date, end_date, limit)
+        
+        return jsonify({
+            'success': True,
+            'logs': logs,
+            'total': len(logs),
+            'device': device,
+            'command': command,
+            'start_date': start_date,
+            'end_date': end_date,
+            'limit': limit
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'logs': [],
+            'total': 0
+        })
+
+@app.route('/api/logs/summary')
+def api_logs_summary():
+    """ログサマリーAPI"""
+    try:
+        log_manager = get_log_manager()
+        summary = log_manager.get_log_summary()
+        
+        return jsonify({
+            'success': True,
+            'summary': summary
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@app.route('/api/logs/device/<device_name>')
+def api_device_logs(device_name):
+    """デバイス別ログAPI"""
+    try:
+        log_manager = get_log_manager()
+        logs = log_manager.get_device_logs(device_name, limit=100)
+        
+        return jsonify({
+            'success': True,
+            'logs': logs,
+            'total': len(logs),
+            'device_name': device_name
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'logs': [],
+            'total': 0
+        })
+
+@app.route('/api/logs/command/<command>')
+def api_command_logs(command):
+    """コマンド別ログAPI"""
+    try:
+        log_manager = get_log_manager()
+        logs = log_manager.get_command_logs(command, limit=100)
+        
+        return jsonify({
+            'success': True,
+            'logs': logs,
+            'total': len(logs),
+            'command': command
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'logs': [],
+            'total': 0
+        })
+
+@app.route('/clear_logs', methods=['POST'])
+def clear_logs_web():
+    """ログクリア（Web用）"""
+    try:
+        log_manager = get_log_manager()
+        
+        # フォームデータ取得
+        device = request.form.get('device')
+        older_than_days = request.form.get('older_than_days')
+        
+        if older_than_days:
+            older_than_days = int(older_than_days)
+        
+        log_manager.clear_logs(device, older_than_days)
+        
+        flash('ログをクリアしました', 'success')
+        
+    except Exception as e:
+        flash(f'ログクリアエラー: {e}', 'danger')
+    
+    return redirect(url_for('view_logs'))
 
 # インポート機能
 @app.route('/import_devices', methods=['GET', 'POST'])

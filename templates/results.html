@@ -1,0 +1,102 @@
+
+
+{% extends "base.html" %}
+
+{% block title %}実行結果一覧{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>実行結果一覧</h2>
+    
+    {% if error_message %}
+    <div class="alert alert-danger" role="alert">
+        {{ error_message }}
+    </div>
+    {% endif %}
+    
+    {% if sorted_dates %}
+        {% for date in sorted_dates %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ date }}</h5>
+            </div>
+            <div class="card-body">
+                {% if results_by_date[date] %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>実行名</th>
+                                    <th>種類</th>
+                                    <th>状態</th>
+                                    <th>デバイス/シナリオ</th>
+                                    <th>実行時間</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results_by_date[date] %}
+                                <tr>
+                                    <td>
+                                        {% if result.scenario_name %}
+                                            シナリオ: {{ result.scenario_name }}
+                                        {% elif result.scenario_list_name %}
+                                            シナリオリスト: {{ result.scenario_list_name }}
+                                        {% else %}
+                                            未知の実行
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if result.scenario_name %}シナリオ{% endif %}
+                                        {% if result.scenario_list_name %}シナリオリスト{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if result.status == 'success' %}
+                                            <span class="badge bg-success">成功</span>
+                                        {% elif result.status == 'partial_success' %}
+                                            <span class="badge bg-warning">部分的成功</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">失敗</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if result.total_devices %}
+                                            {{ result.successful_devices }}/{{ result.total_devices }} デバイス
+                                        {% elif result.total_scenarios %}
+                                            {{ result.successful_scenarios }}/{{ result.total_scenarios }} シナリオ
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ result.timestamp }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('show_result', filename=date + '/' + result.filename|default('unknown.yaml')) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                詳細
+                                            </a>
+                                            {% if result.filename and result.filename.endswith('.log') %}
+                                                <a href="{{ url_for('show_result_log', filename=date + '/' + result.filename) }}" 
+                                                   class="btn btn-sm btn-outline-secondary">
+                                                    ログ
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">この日の実行結果はありません。</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            実行結果がありません。シナリオを実行すると結果がここに表示されます。
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,296 @@
+
+
+
+{% extends "base.html" %}
+
+{% block title %}実行結果詳細{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>実行結果詳細</h2>
+        <div>
+            <a href="{{ url_for('show_results') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> 戻る
+            </a>
+            {% if result.filename %}
+                <a href="{{ url_for('download_file', filename=result.filename) }}" 
+                   class="btn btn-primary">
+                    <i class="bi bi-download"></i> ダウンロード
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- 全体のサマリー -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">実行サマリー</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>実行名:</strong>
+                    <p>
+                        {% if result.scenario_name %}
+                            シナリオ: {{ result.scenario_name }}
+                        {% elif result.scenario_list_name %}
+                            シナリオリスト: {{ result.scenario_list_name }}
+                        {% else %}
+                            未知の実行
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <strong>状態:</strong>
+                    <p>
+                        {% if result.status == 'success' %}
+                            <span class="badge bg-success">成功</span>
+                        {% elif result.status == 'partial_success' %}
+                            <span class="badge bg-warning">部分的成功</span>
+                        {% else %}
+                            <span class="badge bg-danger">失敗</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <strong>実行時間:</strong>
+                    <p>{{ result.timestamp }}</p>
+                </div>
+                <div class="col-md-3">
+                    <strong>実行サマリー:</strong>
+                    <p>{{ result.execution_summary|default('N/A') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- デバイス別結果 -->
+    {% if result.device_results %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">デバイス別結果</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>デバイス名</th>
+                            <th>ホスト</th>
+                            <th>状態</th>
+                            <th>コマンド数</th>
+                            <th>成功/失敗</th>
+                            <th>実行時間</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for device_result in result.device_results %}
+                        <tr>
+                            <td>{{ device_result.device_name }}</td>
+                            <td>{{ device_result.device_host }}</td>
+                            <td>
+                                {% if device_result.success %}
+                                    <span class="badge bg-success">成功</span>
+                                {% else %}
+                                    <span class="badge bg-danger">失敗</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ device_result.total_commands }}</td>
+                            <td>
+                                {{ device_result.successful_commands }}/{{ device_result.total_commands }}
+                            </td>
+                            <td>
+                                {% if device_result.execution_time %}
+                                    {{ "%.2f"|format(device_result.execution_time) }}秒
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if device_result.command_results %}
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="toggleDeviceDetails('{{ device_result.device_name }}')">
+                                        詳細
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr id="device-details-{{ device_result.device_name }}" style="display: none;">
+                            <td colspan="7">
+                                <div class="mt-3">
+                                    <h6>コマンド実行結果:</h6>
+                                    {% for cmd_result in device_result.command_results %}
+                                    <div class="mb-2">
+                                        <strong>コマンド:</strong> {{ cmd_result.command }}<br>
+                                        <strong>状態:</strong> 
+                                            {% if cmd_result.success %}
+                                                <span class="badge bg-success">成功</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">失敗</span>
+                                            {% endif %}
+                                        <br>
+                                        <strong>実行時間:</strong> {{ "%.2f"|format(cmd_result.execution_time) }}秒<br>
+                                        {% if cmd_result.output %}
+                                            <strong>出力:</strong>
+                                            <pre class="mt-1 p-2 bg-light border">{{ cmd_result.output }}</pre>
+                                        {% endif %}
+                                        {% if cmd_result.error_output %}
+                                            <strong>エラー:</strong>
+                                            <pre class="mt-1 p-2 bg-danger text-white border">{{ cmd_result.error_output }}</pre>
+                                        {% endif %}
+                                    </div>
+                                    <hr>
+                                    {% endfor %}
+                                    
+                                    {% if device_result.error_message %}
+                                        <div class="alert alert-danger">
+                                            <strong>デバイスエラー:</strong> {{ device_result.error_message }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- シナリオリストの場合の結果 -->
+    {% if result.scenario_results %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">シナリオ別結果</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>シナリオ名</th>
+                            <th>状態</th>
+                            <th>デバイス結果</th>
+                            <th>実行時間</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scenario_result in result.scenario_results %}
+                        <tr>
+                            <td>{{ scenario_result.scenario_name }}</td>
+                            <td>
+                                {% if scenario_result.success %}
+                                    <span class="badge bg-success">成功</span>
+                                {% else %}
+                                    <span class="badge bg-danger">失敗</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if scenario_result.total_devices %}
+                                    {{ scenario_result.successful_devices }}/{{ scenario_result.total_devices }} デバイス
+                                {% endif %}
+                            </td>
+                            <td>{{ scenario_result.timestamp }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="toggleScenarioDetails('{{ scenario_result.scenario_name }}')">
+                                    詳細
+                                </button>
+                            </td>
+                        </tr>
+                        <tr id="scenario-details-{{ scenario_result.scenario_name }}" style="display: none;">
+                            <td colspan="5">
+                                <div class="mt-3">
+                                    <h6>デバイス別結果:</h6>
+                                    {% if scenario_result.device_results %}
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>デバイス名</th>
+                                                        <th>状態</th>
+                                                        <th>コマンド数</th>
+                                                        <th>成功/失敗</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for device_result in scenario_result.device_results %}
+                                                    <tr>
+                                                        <td>{{ device_result.device_name }}</td>
+                                                        <td>
+                                                            {% if device_result.success %}
+                                                                <span class="badge bg-success">成功</span>
+                                                            {% else %}
+                                                                <span class="badge bg-danger">失敗</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ device_result.total_commands }}</td>
+                                                        <td>
+                                                            {{ device_result.successful_commands }}/{{ device_result.total_commands }}
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted">デバイス結果がありません。</p>
+                                    {% endif %}
+                                    
+                                    {% if scenario_result.error_message %}
+                                        <div class="alert alert-danger mt-3">
+                                            <strong>シナリオエラー:</strong> {{ scenario_result.error_message }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- 実行ログへのリンク -->
+    {% if result.filename and result.filename.endswith('.yaml') %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">実行ログ</h5>
+            </div>
+            <div class="card-body">
+                <p>実行の詳細なログは以下のリンクから確認できます。</p>
+                <a href="{{ url_for('show_result_log', filename=result.filename.replace('.yaml', '.log')) }}" 
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-file-text"></i> 実行ログを表示
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleDeviceDetails(deviceName) {
+    const detailsRow = document.getElementById('device-details-' + deviceName);
+    if (detailsRow.style.display === 'none') {
+        detailsRow.style.display = 'table-row';
+    } else {
+        detailsRow.style.display = 'none';
+    }
+}
+
+function toggleScenarioDetails(scenarioName) {
+    const detailsRow = document.getElementById('scenario-details-' + scenarioName);
+    if (detailsRow.style.display === 'none') {
+        detailsRow.style.display = 'table-row';
+    } else {
+        detailsRow.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
+
+
