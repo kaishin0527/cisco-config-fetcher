@@ -21,7 +21,19 @@
         </div>
         <div class="mb-3">
             <label class="form-label">デバイスタイプ</label>
-            <input type="text" class="form-control" name="device_type" value="{{ device.device_type if device else 'cisco_ios' }}" required>
+            <select class="form-select" name="device_type" required>
+                {% for device_type in supported_device_types %}
+                    <option value="{{ device_type }}" 
+                        {% if device and device.device_type == device_type %}selected{% endif %}>
+                        {{ device_type }}
+                    </option>
+                {% endfor %}
+            </select>
+            {% if error and error.invalid_device_type %}
+                <div class="invalid-feedback d-block">
+                    {{ error.message }}
+                </div>
+            {% endif %}
         </div>
         <div class="mb-3">
             <label class="form-label">ユーザー名</label>

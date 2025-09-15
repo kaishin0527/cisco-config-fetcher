@@ -5,6 +5,7 @@
 """
 import os
 import yaml
+from yaml_utils import load_encrypted_yaml, save_encrypted_yaml
 from pathlib import Path
 from typing import Dict, Any, Optional
 import logging
@@ -48,7 +49,10 @@ class ConfigManager:
             else:
                 try:
                     with open(config_file, 'r', encoding='utf-8') as f:
-                        self._configs[config_type] = yaml.safe_load(f) or {}
+                        
+from app import load_yaml
+self._configs[config_type] = load_yaml(str(config_file))
+
                     logger.info(f"設定ファイルを読み込みました: {config_file}")
                 except Exception as e:
                     logger.error(f"設定ファイルの読み込みに失敗しました: {config_file}, エラー: {e}")

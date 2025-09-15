@@ -66,7 +66,45 @@
             <textarea class="form-control" id="description" name="description" rows="3">{{ device.description }}</textarea>
         </div>
         <button type="submit" class="btn btn-primary">Update Device</button>
+        <button type="button" class="btn btn-info ml-2" onclick="testConnection()">Test Connection</button>
         <a href="{{ url_for('devices') }}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
+
+<script>
+function testConnection() {
+    const btn = document.querySelector('button[onclick="testConnection()"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Testing...';
+    
+    fetch(`/test_connection/${encodeURIComponent('{{ device.name }}')}`, { 
+        method: 'POST'
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network error');
+        return response.json();
+    })
+    .then(data => {
+        const alertClass = data.success ? 'alert-success' : 'alert-danger';
+        const message = `${data.message} (${data.connection_time.toFixed(2)}s)`;
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert ${alertClass} mt-3`;
+        alertDiv.innerHTML = `
+            ${message}
+            ${data.error_type ? `<div class="small">Error type: ${data.error_type}</div>` : ''}
+        `;
+        
+        btn.parentNode.insertBefore(alertDiv, btn.nextSibling);
+        setTimeout(() => alertDiv.remove(), 5000);
+    })
+    .catch(error => {
+        alert('Test failed: ' + error.message);
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = 'Test Connection';
+    });
+}
+</script>
 {% endblock %}

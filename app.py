@@ -1,12 +1,54 @@
 
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash
+from network_executor import NetworkDeviceExecutor
 import yaml
 import os
 import subprocess
 import threading
 import json
 from datetime import datetime
+
 import io
+from typing import Dict, Any
+from security import ConfigEncryptor, initialize_encryption
+
+# 暗号化初期化
+encryptor = initialize_encryption(os.getenv('ENCRYPTION_KEY_PATH', 'secret.key'))
+
+SENSITIVE_FIELDS = {'password', 'secret', 'enable_password'}
+
+def load_yaml(file_path: str, decrypt: bool = True) -> Dict[str, Any]:
+    """YAMLファイルを読み込み、必要に応じて復号化"""
+    if not os.path.exists(file_path):
+        return {}
+        
+    with open(file_path, 'r') as f:
+        data = yaml.safe_load(f) or {}
+    
+    if decrypt:
+        for item in data.values():
+            for field in SENSITIVE_FIELDS:
+                if field in item and item[field]:
+                    try:
+                        item[field] = encryptor.decrypt(item[field])
+                    except:
+                        pass  # 復号化失敗時は平文のまま
+    return data
+
+def save_yaml(file_path: str, data: Dict[str, Any], encrypt: bool = True):
+    """YAMLファイルに保存（オプションで暗号化）"""
+    to_save = data.copy()
+    
+    if encrypt:
+        for key in to_save:
+            for field in SENSITIVE_FIELDS:
+                if field in to_save[key] and to_save[key][field]:
+                    to_save[key][field] = encryptor.encrypt(to_save[key][field])
+    
+    with open(file_path, 'w') as f:
+        yaml.dump(to_save, f)
+
+
 
 # 設定管理モジュールのインポート
 from config_manager import config_manager, get_devices, get_command_groups, get_scenarios
@@ -295,10 +337,28 @@ def add_device():
     
     return redirect(url_for('devices'))
 
+@app.route('/test_connection/<device_name>', methods=['POST'])
+def test_device_connection(device_name):
+    devices = load_yaml(DEVICES_FILE)
+    if device_name not in devices:
+        return jsonify({'success': False, 'message': 'Device not found'}), 404
+    
+    try:
+        executor = NetworkDeviceExecutor(devices[device_name])
+        test_result = executor.test_connection()
+        return jsonify(test_result)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/edit_device/<device_name>', methods=['GET', 'POST'])
 def edit_device(device_name):
     """デバイスを編集"""
     devices = get_devices()
+    
+    if request.method == 'GET':
+        return render_template('device_form.html',
+                            device=devices.get(device_name),
+                            supported_device_types=NetworkDeviceExecutor.SUPPORTED_DEVICE_TYPES)
     
     if request.method == 'POST':
         if device_name in devices:
@@ -937,17 +997,47 @@ def execute_scenario_list():
 
 @app.route('/test_device_connection', methods=['POST'])
 def test_device_connection():
-    """デバイス接続テスト"""
-    device_name = request.form.get('device_name')
-    
+    """デバイス接続テスト（HTMLとJSONの両方に対応）"""
+    if request.content_type == 'application/json':
+        data = request.get_json()
+        device_name = data.get('device_name')
+        return_json = True
+    else:
+        device_name = request.form.get('device_name')
+        return_json = False
+
     if not device_name:
-        return jsonify({'success': False, 'message': 'デバイス名が指定されていません'})
-    
+        if return_json:
+            return jsonify({'success': False, 'message': 'デバイス名が指定されていません'}), 400
+        else:
+            flash('デバイス名が指定されていません', 'danger')
+            return redirect(url_for('list_devices'))
+
     try:
         devices = get_devices()
-        
         if device_name not in devices:
-            return jsonify({'success': False, 'message': f'デバイス "{device_name}" が見つかりません'})
+            if return_json:
+                return jsonify({'success': False, 'message': f'デバイス "{device_name}" が見つかりません'}), 404
+            else:
+                flash(f'デバイス "{device_name}" が見つかりません', 'danger')
+                return redirect(url_for('list_devices'))
+
+        success = test_device_connection(devices[device_name])
+        message = '接続テストが成功しました' if success else '接続に失敗しました'
+
+        if return_json:
+            return jsonify({'success': success, 'message': message})
+        else:
+            flash(message, 'success' if success else 'danger')
+            return redirect(url_for('edit_device', device_name=device_name))
+
+    except Exception as e:
+        error_message = f'接続テスト中にエラーが発生しました: {str(e)}'
+        if return_json:
+            return jsonify({'success': False, 'message': error_message}), 500
+        else:
+            flash(error_message, 'danger')
+            return redirect(url_for('edit_device', device_name=device_name))
         
         device_config = devices[device_name]
         

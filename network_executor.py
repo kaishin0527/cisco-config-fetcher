@@ -19,6 +19,17 @@ logger = logging.getLogger(__name__)
 
 class NetworkDeviceExecutor:
     """ネットワークデバイスコマンド実行クラス"""
+
+    SUPPORTED_DEVICE_TYPES = [
+        'cisco_ios',    # Cisco IOS デバイス
+        'cisco_asa'     # Cisco ASA ファイアウォール
+    ]
+
+    DEFAULT_TIMEOUTS = {
+        'connect': 30,    # 接続タイムアウト（秒）
+        'command': 60,    # コマンド実行タイムアウト
+        'scenario': 180   # シナリオ全体のタイムアウト
+    }
     
     def __init__(self, device_config: Dict[str, Any]):
         """
@@ -28,6 +39,10 @@ class NetworkDeviceExecutor:
             device_config: デバイス設定辞書
         """
         self.device_config = device_config
+        # タイムアウト設定の初期化
+        self.timeouts = self.DEFAULT_TIMEOUTS.copy()
+        if 'timeouts' in device_config:
+            self.timeouts.update(device_config['timeouts'])
         self.connection = None
         self.lock = threading.Lock()
         
@@ -164,7 +179,10 @@ class NetworkDeviceExecutor:
                 loop.run_until_complete(_cleanup())
             return False
     
+
     def execute_commands(self, commands: List[str]) -> Dict[str, Any]:
+        """コマンドを実行（タイムアウト処理付き）"""
+
         """
         コマンドを実行し、結果を返す
         
@@ -174,43 +192,82 @@ class NetworkDeviceExecutor:
         Returns:
             Dict: 実行結果
         """
-        if not self.connection:
-            if not self.connect():
-                return {
-                    'success': False,
-                    'error': 'Failed to establish connection',
-                    'output': '',
-                    'error_output': ''
-                }
-        
         result = {
             'success': True,
             'output': '',
             'error_output': '',
-            'command_results': []
+            'command_results': [],
+            'timeout_occurred': False
         }
-        
+
         try:
+            # 接続の確立（タイムアウト付き）
+            if not self.connection:
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(self.connect)
+                    if not future.result(timeout=self.timeouts['connect']):
+                        return {
+                            'success': False,
+                            'error': 'Connection failed',
+                            'error_type': 'connection',
+                            'output': '',
+                            'error_output': ''
+                        }
+
             connection_type = self.device_config.get('connection_type', 'ssh').lower()
             device_name = self.device_config.get('hostname', self.device_config.get('host', 'unknown'))
             
             for command in commands:
-                command_result = self._execute_single_command(command, connection_type)
-                result['command_results'].append(command_result)
-                
-                if command_result['success']:
-                    result['output'] += command_result['output'] + "\n"
-                else:
-                    result['success'] = False
-                    result['error_output'] += command_result['error_output'] + "\n"
-                
-                # コマンド実行結果をログに記録
-                self.log_manager.log_command_execution(device_name, command, command_result)
-                    
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(
+                        self._execute_single_command, 
+                        command, 
+                        connection_type
+                    )
+                    try:
+                        command_result = future.result(timeout=self.timeouts['command'])
+                        result['command_results'].append(command_result)
+                        
+                        if command_result['success']:
+                            result['output'] += command_result['output'] + "\n"
+                        else:
+                            result['success'] = False
+                            result['error_output'] += command_result['error_output'] + "\n"
+                        
+                            # コマンド実行結果をログに記録
+                            self.log_manager.log_command_execution(
+                                device_name, 
+                                command, 
+                                command_result
+                            )
+                            
+                    except TimeoutError:
+                        timeout_result = {
+                            'command': command,
+                            'success': False,
+                            'output': '',
+                            'error_output': f"Command timed out after {self.timeouts['command']} seconds",
+                            'error_type': 'timeout',
+                            'execution_time': self.timeouts['command']
+                        }
+                        result['command_results'].append(timeout_result)
+                        result['success'] = False
+                        result['error_output'] += timeout_result['error_output'] + "\n"
+                        result['timeout_occurred'] = True
+                        self.log_manager.log_command_execution(
+                            device_name,
+                            command,
+                            timeout_result
+                        )
+                        
         except Exception as e:
             error_msg = f"Command execution error: {e}"
             logger.error(error_msg)
-            result['success'] = False
+            result.update({
+                'success': False,
+                'error_output': error_msg + "\n",
+                'error_type': 'exception'
+            })
             result['error_output'] += error_msg + "\n"
             
         finally:
@@ -346,30 +403,39 @@ class NetworkDeviceExecutor:
         except Exception as e:
             logger.error(f"Error while disconnecting: {e}")
     
-    def test_connection(self) -> Dict[str, Any]:
+    def test_connection(self, timeout=30) -> Dict[str, Any]:
         """
-        接続テストを実行
+        接続テストを実行（タイムアウト付き）
         
+        Args:
+            timeout: 接続タイムアウト時間（秒）
+            
         Returns:
             Dict: 接続テスト結果
         """
         test_result = {
             'success': False,
             'message': '',
-            'connection_time': 0
+            'connection_time': 0,
+            'error_type': ''
         }
         
         start_time = time.time()
         
         try:
-            if self.connect():
-                test_result['success'] = True
-                test_result['message'] = 'Connection successful'
-            else:
-                test_result['message'] = 'Connection failed'
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(self.connect)
+                result = future.result(timeout=timeout)
                 
+                test_result['success'] = result
+                test_result['message'] = 'Connection successful' if result else 'Connection failed'
+                
+        except TimeoutError:
+            test_result['message'] = f"Connection timed out after {timeout} seconds"
+            test_result['error_type'] = 'timeout'
         except Exception as e:
-            test_result['message'] = f"Connection error: {e}"
+            test_result['message'] = f"Connection error: {str(e)}"
+            test_result['error_type'] = 'exception'
             
         finally:
             test_result['connection_time'] = time.time() - start_time
@@ -403,7 +469,7 @@ class NetworkDeviceExecutor:
     
     def execute_scenario(self, scenario_config: Dict[str, Any], command_groups: Dict[str, Any]) -> Dict[str, Any]:
         """
-        シナリオを実行
+        シナリオを実行（タイムアウト処理付き）
         
         Args:
             scenario_config: シナリオ設定
@@ -412,41 +478,111 @@ class NetworkDeviceExecutor:
         Returns:
             実行結果
         """
-        results = []
-        commands = scenario_config.get('commands', [])
+        scenario_result = {
+            'success': True,
+            'results': [],
+            'output': '',
+            'error_output': '',
+            'total_commands': 0,
+            'successful_commands': 0,
+            'failed_commands': 0,
+            'timeout_occurred': False,
+            'total_time': 0.0
+        }
         
         device_name = self.device_config.get('hostname', self.device_config.get('host', 'unknown'))
         scenario_name = scenario_config.get('name', 'unknown_scenario')
+        commands = scenario_config.get('commands', [])
+        scenario_result['total_commands'] = len(commands)
         
-        for command_item in commands:
-            if isinstance(command_item, str) and command_item in command_groups:
-                # コマンドグループの実行
-                result = self.execute_command_group(command_item, command_groups)
-            else:
-                # 単一コマンドの実行
-                result = self.execute_commands([command_item])
-            
-            results.append(result)
+        start_time = time.time()
         
-        # シナリオ実行結果を作成
-        scenario_result = {
-            'success': all(r.get('success', False) for r in results),
-            'results': results,
-            'output': '\n'.join(r.get('output', '') for r in results),
-            'error_output': '\n'.join(r.get('error_output', '') for r in results),
-            'total_commands': len(commands),
-            'successful_commands': sum(1 for r in results if r.get('success', False)),
-            'failed_commands': sum(1 for r in results if not r.get('success', False))
-        }
-        
-        # シナリオ実行結果をログに記録
-        self.log_manager.log_scenario_execution(device_name, scenario_name, scenario_result)
+        try:
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(self._execute_scenario_commands, commands, command_groups)
+                results = future.result(timeout=self.timeouts['scenario'])
+                
+                scenario_result['results'] = results
+                scenario_result['success'] = all(r.get('success', False) for r in results)
+                scenario_result['output'] = '\n'.join(r.get('output', '') for r in results)
+                scenario_result['error_output'] = '\n'.join(r.get('error_output', '') for r in results)
+                scenario_result['successful_commands'] = sum(1 for r in results if r.get('success', False))
+                scenario_result['failed_commands'] = sum(1 for r in results if not r.get('success', False))
+                scenario_result['timeout_occurred'] = any(r.get('timeout_occurred', False) for r in results)
+                
+        except TimeoutError:
+            scenario_result.update({
+                'success': False,
+                'error_output': f"Scenario timed out after {self.timeouts['scenario']} seconds",
+                'timeout_occurred': True,
+                'error_type': 'scenario_timeout'
+            })
+        except Exception as e:
+            scenario_result.update({
+                'success': False,
+                'error_output': f"Scenario execution error: {str(e)}",
+                'error_type': 'exception'
+            })
+        finally:
+            scenario_result['total_time'] = time.time() - start_time
+            self.log_manager.log_scenario_execution(
+                device_name,
+                scenario_name,
+                scenario_result
+            )
         
         return scenario_result
+
+    def _execute_scenario_commands(self, commands: List[str], command_groups: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """シナリオ内のコマンドを実行（内部メソッド）"""
+        results = []
+        for command_item in commands:
+            if isinstance(command_item, str) and command_item in command_groups:
+                result = self.execute_command_group(command_item, command_groups)
+            else:
+                result = self.execute_commands([command_item])
+            results.append(result)
+        return results
     
-    def validate_device_config(self) -> bool:
+    def validate_device_config(self) -> Dict[str, Any]:
         """
-        デバイス設定のバリデーション
+        デバイス設定の詳細バリデーション
+        
+        Returns:
+            Dict: {
+                'valid': bool,
+                'missing_fields': List[str],
+                'invalid_device_type': bool,
+                'message': str
+            }
+        """
+        required_fields = ['host', 'username', 'password', 'device_type']
+        missing_fields = [field for field in required_fields if field not in self.device_config]
+        
+        # デバイスタイプのチェック
+        invalid_device_type = False
+        if 'device_type' in self.device_config:
+            invalid_device_type = self.device_config['device_type'] not in self.SUPPORTED_DEVICE_TYPES
+        
+        validation_result = {
+            'valid': not missing_fields and not invalid_device_type,
+            'missing_fields': missing_fields,
+            'invalid_device_type': invalid_device_type
+        }
+        
+        # エラーメッセージの構築
+        messages = []
+        if missing_fields:
+            messages.append(f"Missing required fields: {', '.join(missing_fields)}")
+        if invalid_device_type:
+            messages.append(
+                f"Unsupported device type: {self.device_config['device_type']}. "
+                f"Supported types are: {', '.join(self.SUPPORTED_DEVICE_TYPES)}"
+            )
+            
+        validation_result['message'] = '; '.join(messages) if messages else 'Valid configuration'
+        
+        return validation_result
         
         Returns:
             bool: 設定が有効な場合True
@@ -547,5 +683,5 @@ def get_supported_device_types() -> List[str]:
 
 
 def get_supported_connection_types() -> List[str]:
-    """サポートする接続タイプを返す"""
+    
     return ['ssh', 'telnet']
